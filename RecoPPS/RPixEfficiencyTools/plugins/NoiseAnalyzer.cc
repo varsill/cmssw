@@ -1,10 +1,10 @@
 // -*- C++ -*-
 //
-// Package:    RecoCTPPS/RPixEfficiencyTools
+// Package:    RecoPPS/RPixEfficiencyTools
 // Class:      NoiseAnalyzer
 //
 /**\class NoiseAnalyzer_2018 NoiseAnalyzer_2018.cc
- RecoCTPPS/RPixEfficiencyTools/plugins/NoiseAnalyzer_2018.cc
+ RecoPPS/RPixEfficiencyTools/plugins/NoiseAnalyzer_2018.cc
 
  Description: [one line class summary]
 

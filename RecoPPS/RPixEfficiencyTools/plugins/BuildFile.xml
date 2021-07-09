@@ -7,13 +7,12 @@
 <use name="DataFormats/CTPPSDigi"/>
 <use name="DataFormats/CTPPSReco"/>
 
-<use name="CondFormats/CTPPSReadoutObjects"/>
 <use name="CondFormats/DataRecord"/>
 <use name="CondFormats/RunInfo"/>
 <use name="Geometry/Records"/>
 <use name="Geometry/VeryForwardGeometryBuilder"/>
 <use name="RecoPPS/Local"/>
 
-<library name="RecoCTPPSRPixEfficiencyToolsPlugins" file="*.cc">
+<library name="RecoPPSRPixEfficiencyToolsPlugins" file="*.cc">
 <flags EDM_PLUGIN="1"/>
 </library>

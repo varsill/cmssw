@@ -19,22 +19,22 @@ else
 
 	outputFile=/eos/project/c/ctpps/subsystems/Pixel/RPixTracking/EfficiencyCalculation2018/ReRecoOutputTmp_CMSSW_10_6_2/Run${1}.root
 
-	eval 'echo "executable			= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/mergeFiles.sh"						>> test/Jobs/Run${1}_mergeJob.sub'
+	eval 'echo "executable			= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/mergeFiles.sh"						>> test/Jobs/Run${1}_mergeJob.sub'
 	eval 'echo "arguments  			= ${1} ${outputFile} $CMSSW_BASE"													>> test/Jobs/Run${1}_mergeJob.sub'
-	eval 'echo "output 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_mergeJob.out"	>> test/Jobs/Run${1}_mergeJob.sub'
-	eval 'echo "error 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_mergeJob.err"	>> test/Jobs/Run${1}_mergeJob.sub'
-	eval 'echo "log 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_mergeJob.log"	>> test/Jobs/Run${1}_mergeJob.sub'
+	eval 'echo "output 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_mergeJob.out"	>> test/Jobs/Run${1}_mergeJob.sub'
+	eval 'echo "error 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_mergeJob.err"	>> test/Jobs/Run${1}_mergeJob.sub'
+	eval 'echo "log 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_mergeJob.log"	>> test/Jobs/Run${1}_mergeJob.sub'
 	eval 'echo "notify_user			= andrea.bellora@cern.ch"															>> test/Jobs/Run${1}_mergeJob.sub'
 	eval 'echo "notification		= Always"																			>> test/Jobs/Run${1}_mergeJob.sub'
 	eval 'echo "use_x509userproxy   = true"																				>> test/Jobs/Run${1}_mergeJob.sub'
 	eval 'echo "+JobFlavour			= \"workday\""																		>> test/Jobs/Run${1}_mergeJob.sub'
 	eval 'echo "queue"																									>> test/Jobs/Run${1}_mergeJob.sub'
 
-	eval 'echo "executable			= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/testFiles.sh"						>> test/Jobs/Run${1}_testJob.sub'
+	eval 'echo "executable			= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/testFiles.sh"						>> test/Jobs/Run${1}_testJob.sub'
 	eval 'echo "arguments  			= ${1} $CMSSW_BASE ${maxEvents}"													>> test/Jobs/Run${1}_testJob.sub'
-	eval 'echo "output 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_testJob.out"	>> test/Jobs/Run${1}_testJob.sub'
-	eval 'echo "error 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_testJob.err"	>> test/Jobs/Run${1}_testJob.sub'
-	eval 'echo "log 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_testJob.log"	>> test/Jobs/Run${1}_testJob.sub'
+	eval 'echo "output 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_testJob.out"	>> test/Jobs/Run${1}_testJob.sub'
+	eval 'echo "error 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_testJob.err"	>> test/Jobs/Run${1}_testJob.sub'
+	eval 'echo "log 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_testJob.log"	>> test/Jobs/Run${1}_testJob.sub'
 	eval 'echo "notify_user			= andrea.bellora@cern.ch"															>> test/Jobs/Run${1}_testJob.sub'
 	eval 'echo "notification		= Always"																			>> test/Jobs/Run${1}_testJob.sub'
 	eval 'echo "use_x509userproxy   = true"																				>> test/Jobs/Run${1}_testJob.sub'
@@ -47,11 +47,11 @@ else
 	i=0
 	while [ $[i*eventsPerJob] -lt $maxEvents ]
 	do
-		eval 'echo "executable			= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/ReReco.sh"							>> test/Jobs/Run${1}_${i}.sub'
+		eval 'echo "executable			= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/ReReco.sh"							>> test/Jobs/Run${1}_${i}.sub'
 		eval 'echo "arguments  			= ${1} $CMSSW_BASE" $((i*eventsPerJob)) ${eventsPerJob} ${i}						>> test/Jobs/Run${1}_${i}.sub'
-		eval 'echo "output 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_${i}.out" 	>> test/Jobs/Run${1}_${i}.sub'
-		eval 'echo "error 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_${i}.err" 	>> test/Jobs/Run${1}_${i}.sub'
-		eval 'echo "log 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_${i}.log" 	>> test/Jobs/Run${1}_${i}.sub'
+		eval 'echo "output 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_${i}.out" 	>> test/Jobs/Run${1}_${i}.sub'
+		eval 'echo "error 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_${i}.err" 	>> test/Jobs/Run${1}_${i}.sub'
+		eval 'echo "log 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LogFiles/Run${1}_${i}.log" 	>> test/Jobs/Run${1}_${i}.sub'
 		eval 'echo "notify_user			= andrea.bellora@cern.ch"															>> test/Jobs/Run${1}_${i}.sub'
 		eval 'echo "notification		= Always"																			>> test/Jobs/Run${1}_${i}.sub'
 		eval 'echo "use_x509userproxy   = true"																				>> test/Jobs/Run${1}_${i}.sub'

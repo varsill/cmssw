@@ -126,15 +126,15 @@ process.source.lumisToProcess = LumiList.LumiList(filename = jsonFileName).getVL
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v21', '')
 
-from RecoCTPPS.Configuration.recoCTPPS_cff import *
-process.load("RecoCTPPS.Configuration.recoCTPPS_cff")
+from RecoPPS.Configuration.RecoPPS_cff import *
+process.load("RecoPPS.Configuration.RecoPPS_cff")
 process.load("EventFilter.CTPPSRawToDigi.ctppsRawToDigi_cff")
 
 # Path and EndPath definitions
 
 process.reco_step = cms.Path(
     # process.ctppsRawToDigi *
-    process.recoCTPPS
+    process.RecoPPS
 )
 # process.endjob_step = cms.EndPath(process.endOfProcess)
 process.output_step = cms.EndPath(process.output)

@@ -8,13 +8,13 @@ else
 	nameTag=Run${1}
 	export CMSSW_BASE=${2}
 	export SCRAM_ARCH=slc7_amd64_gcc700
-	export X509_USER_PROXY=$CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/x509up_u$UID
-	cd $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/
+	export X509_USER_PROXY=$CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/x509up_u$UID
+	cd $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/
 	eval `scramv1 runtime -sh`
 	if true
 	then	
 		# addJSON=" useJsonFile=true jsonFileName=/eos/project-c/ctpps/Operations/DataExternalConditions/2017/combined_RPIN_CMS_EraF2_TimingIn.json"
-		# addJSON=" useJsonFile=true jsonFileName=/afs/cern.ch/user/a/abellora/Work/CT-PPS/2017_EfficiencyTool/CMSSW_10_6_10/src/RecoCTPPS/RPixEfficiencyTools/test/JSONFiles/EraB_simMultiRP_realDataCheck.json"
+		# addJSON=" useJsonFile=true jsonFileName=/afs/cern.ch/user/a/abellora/Work/CT-PPS/2017_EfficiencyTool/CMSSW_10_6_10/src/RecoPPS/RPixEfficiencyTools/test/JSONFiles/EraB_simMultiRP_realDataCheck.json"
 		
 		fileSuffix="_6PlanesTracks"
 	fi

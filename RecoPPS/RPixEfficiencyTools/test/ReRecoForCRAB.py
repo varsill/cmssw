@@ -25,8 +25,8 @@ process.source = cms.Source("PoolSource",
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v21', '')
 
-from RecoCTPPS.Configuration.recoCTPPS_cff import *
-process.load("RecoCTPPS.Configuration.recoCTPPS_cff")
+from RecoPPS.Configuration.RecoPPS_cff import *
+process.load("RecoPPS.Configuration.RecoPPS_cff")
 process.load("EventFilter.CTPPSRawToDigi.ctppsRawToDigi_cff")
 
 from HLTrigger.HLTfilters.hltHighLevel_cfi import *

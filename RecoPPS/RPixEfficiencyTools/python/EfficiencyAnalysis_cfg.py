@@ -162,7 +162,7 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 from CondCore.CondDB.CondDB_cfi import *
 
 # Global tag
-process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v28')
+process.GlobalTag = GlobalTag(process.GlobalTag, '113X_dataRun2_v6')
 
 process.demo = cms.EDAnalyzer('EfficiencyTool_2018',
     # outputFileName=cms.untracked.string("RPixAnalysis_RecoLocalTrack_ReferenceRunAfterTS2.root"),

@@ -9,7 +9,7 @@ process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('FWCore.ParameterSet.Types')
-from RecoCTPPS.Configuration.RecoCTPPS_EventContent_cff import RecoCTPPSAOD
+from RecoPPS.Configuration.RecoPPS_EventContent_cff import RecoPPSAOD
 
 import FWCore.ParameterSet.VarParsing as VarParsing
 options = VarParsing.VarParsing ()
@@ -96,7 +96,7 @@ process.output = cms.OutputModule("PoolOutputModule",
     fileName = cms.untracked.string(outputFileName),
     outputCommands = cms.untracked.vstring("drop *")
 )
-process.output.outputCommands.extend(RecoCTPPSAOD.outputCommands)
+process.output.outputCommands.extend(RecoPPSAOD.outputCommands)
 
 process.source.lumisToProcess = LumiList.LumiList(filename = jsonFileName).getVLuminosityBlockRange()
 

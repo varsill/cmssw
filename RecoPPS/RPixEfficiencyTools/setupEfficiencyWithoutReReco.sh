@@ -5,7 +5,7 @@ then
 else
 	export CMSSW_BASE=`readlink -f ../../..`
 	eval "mkdir -p -v InputFiles OutputFiles Jobs OutputFiles/PlotsRun${1} LogFiles  test/OutputFiles test/Jobs"
-	echo "file:$CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/OutputFiles/Run${1}.root" > "InputFiles/Run${1}.dat"
+	echo "file:$CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/OutputFiles/Run${1}.root" > "InputFiles/Run${1}.dat"
 	eval "ln -s /eos/project/c/ctpps/subsystems/Pixel/RPixTracking/EfficiencyCalculation2018/ReRecoOutputTmp_CMSSW_10_6_2/Run${1}.root test/OutputFiles/Run${1}.root"
 	echo "***Creating JSON file***"
 	# CHECK THIS!!

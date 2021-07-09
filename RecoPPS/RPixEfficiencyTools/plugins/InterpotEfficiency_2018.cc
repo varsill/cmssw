@@ -1,10 +1,10 @@
 // -*- C++ -*-
 //
-// Package:    RecoCTPPS/RPixEfficiencyTools
+// Package:    RecoPPS/RPixEfficiencyTools
 // Class:      InterpotEfficiency_2018
 //
 /**\class InterpotEfficiency_2018 InterpotEfficiency_2018.cc
- RecoCTPPS/RPixEfficiencyTools/plugins/InterpotEfficiency_2018.cc
+ RecoPPS/RPixEfficiencyTools/plugins/InterpotEfficiency_2018.cc
 
  Description: [one line class summary]
 

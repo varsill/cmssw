@@ -15,11 +15,11 @@ else
 		echo ""
 	else
 		echo ""
-		eval 'echo "executable			= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/FullEfficiencyAnalysis.sh" 	>> Jobs/Run${1}.sub'
+		eval 'echo "executable			= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/FullEfficiencyAnalysis.sh" 	>> Jobs/Run${1}.sub'
 		eval 'echo "arguments  			= ${1} $CMSSW_BASE" 														>> Jobs/Run${1}.sub'
-		eval 'echo "output 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/LogFiles/Run${1}.out" 		>> Jobs/Run${1}.sub'
-		eval 'echo "error 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/LogFiles/Run${1}.err" 		>> Jobs/Run${1}.sub'
-		eval 'echo "log 				= $CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/LogFiles/Run${1}.log" 		>> Jobs/Run${1}.sub'
+		eval 'echo "output 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/LogFiles/Run${1}.out" 		>> Jobs/Run${1}.sub'
+		eval 'echo "error 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/LogFiles/Run${1}.err" 		>> Jobs/Run${1}.sub'
+		eval 'echo "log 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/LogFiles/Run${1}.log" 		>> Jobs/Run${1}.sub'
 		eval 'echo "+JobFlavour			= \"tomorrow\""																>> Jobs/Run${1}.sub'
 		eval 'echo "notify_user			= andrea.bellora@cern.ch"													>> Jobs/Run${1}.sub'
 		eval 'echo "notification		= Always"																	>> Jobs/Run${1}.sub'

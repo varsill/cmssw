@@ -127,7 +127,7 @@ else
 	echo "Saved as test/JSONFiles/Run${1}.json"
 	echo ""
 	echo "***Setting up Input File for Efficiency Analysis***"
-	echo "file:$CMSSW_BASE/src/RecoCTPPS/RPixEfficiencyTools/test/OutputFiles/Run${1}.root" > "InputFiles/Run${1}.dat"
+	echo "file:$CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/OutputFiles/Run${1}.root" > "InputFiles/Run${1}.dat"
 	echo "Saved as InputFiles/Run${1}.dat"
 	echo ""
 	echo "***Setting up links to ReReco OutputFiles***"

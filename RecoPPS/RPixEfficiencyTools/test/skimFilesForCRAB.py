@@ -21,7 +21,7 @@ process.source = cms.Source("PoolSource",
 from HLTrigger.HLTfilters.hltHighLevel_cfi import *
 process.triggerSelection  = hltHighLevel.clone(TriggerResultsTag = "TriggerResults::HLT", HLTPaths = ['HLT_Ele32_WPTight_Gsf_L1DoubleEG_v*','HLT_Ele35_WPTight_Gsf_v*'])
 
-from RecoCTPPS.Configuration.RecoCTPPS_EventContent_cff import RecoCTPPSAOD
+from RecoPPS.Configuration.RecoPPS_EventContent_cff import RecoPPSAOD
 process.output = cms.OutputModule("PoolOutputModule",
     fileName = cms.untracked.string('ReReco_2018B1.root'),
     outputCommands = cms.untracked.vstring("drop *",
@@ -32,7 +32,7 @@ process.output = cms.OutputModule("PoolOutputModule",
         "keep *_ctppsPixelClusters_*_RECO",
     	)
 )
-# process.output.outputCommands.extend(RecoCTPPSAOD.outputCommands)
+# process.output.outputCommands.extend(RecoPPSAOD.outputCommands)
 
 # Path and EndPath definitions
 process.output_step = cms.EndPath(process.output)

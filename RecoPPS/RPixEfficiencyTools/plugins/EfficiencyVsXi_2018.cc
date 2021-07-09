@@ -1,10 +1,10 @@
 // -*- C++ -*-
 //
-// Package:    RecoCTPPS/RPixEfficiencyTools
+// Package:    RecoPPS/RPixEfficiencyTools
 // Class:      EfficiencyVsXi_2018
 //
 /**\class EfficiencyVsXi_2018 EfficiencyVsXi_2018.cc
- RecoCTPPS/RPixEfficiencyTools/plugins/EfficiencyVsXi_2018.cc
+ RecoPPS/RPixEfficiencyTools/plugins/EfficiencyVsXi_2018.cc
 
  Description: [one line class summary]
 
