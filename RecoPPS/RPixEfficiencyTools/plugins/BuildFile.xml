@@ -12,7 +12,7 @@
 <use name="Geometry/Records"/>
 <use name="Geometry/VeryForwardGeometryBuilder"/>
 <use name="RecoPPS/Local"/>
-
+<use name="DQMServices/Core"/>
 <library name="RecoPPSRPixEfficiencyToolsPlugins" file="*.cc">
 <flags EDM_PLUGIN="1"/>
 </library>

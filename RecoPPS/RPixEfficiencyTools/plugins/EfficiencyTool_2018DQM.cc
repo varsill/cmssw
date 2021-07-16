@@ -27,6 +27,9 @@
 #include "DQMServices/Core/interface/DQMEDAnalyzer.h"
 #include "DQMServices/Core/interface/DQMStore.h"
 
+#include "CondFormats/RunInfo/interface/LHCInfo.h"
+#include "CondFormats/DataRecord/interface/LHCInfoRcd.h"
+
 #include "DataFormats/Common/interface/DetSetVector.h"
 
 #include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
@@ -46,12 +49,14 @@ public:
   ~EfficiencyTool_2018DQM();
   static void fillDescriptions(edm::ConfigurationDescriptions &descriptions);
 
+protected:
+  virtual void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
+  virtual void dqmBeginRun(edm::Run const &, edm::EventSetup const &) override;
+
 private:
-  virtual void initialize();
   virtual void analyze(const edm::Event &, const edm::EventSetup &) override;
   void endJob();
-  void dqmBeginRun(edm::Run const &, edm::EventSetup const &) override;
-  void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
+  virtual void initialize();
 
   // Computes the probability of having numberToExtract inefficient planes
   float
@@ -79,19 +84,18 @@ private:
 
   // Return true if a track should be discarded
   bool Cut(CTPPSPixelLocalTrack track, int arm, int station);
-  void setGlobalBinSizes(CTPPSPixelDetId& rpId);
+  double setGlobalBinSizes(CTPPSPixelDetId& rpId);
 
 
-  static const vector<int> romanPotIds = {0, 1, 2, 3, 4, 5, 6};
-  static const vector<int> armIds = {0, 1};
-  static const vector<int> stationIds = {0, 1};
-  static const vector<int> planeIds = {0, 1, 2, 3};
+  static const std::vector<uint32_t> romanPotIds;
+  static const std::vector<uint32_t> armIds;
+  static const std::vector<uint32_t> stationIds;
+  static const std::vector<uint32_t> planeIds;
 
   edm::EDGetTokenT<edm::DetSetVector<CTPPSPixelLocalTrack>>
       pixelLocalTrackToken_;
   edm::EDGetTokenT<edm::DetSetVector<CTPPSPixelRecHit>> pixelRecHitToken_;
 
-  TFile *outputFile_;
   std::string outputFileName_;
   bool isCorrelationPlotEnabled;
   bool supplementaryPlots;
@@ -120,8 +124,6 @@ private:
   std::map<CTPPSPixelDetId, MonitorElement *> h2TrackEfficiencyMap_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2TrackEfficiencyErrorMap_;
   std::map<CTPPSPixelDetId, MonitorElement *> h1NumberOfTracks_;
-  std::map<CTPPSPixelDetId, TGraph *> g1X0Correlation_;
-  std::map<CTPPSPixelDetId, TGraph *> g1Y0Correlation_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2X0Correlation_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2Y0Correlation_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2AvgPlanesUsed_;
@@ -208,7 +210,7 @@ private:
 };
 
 EfficiencyTool_2018DQM::EfficiencyTool_2018DQM(const edm::ParameterSet &iConfig) {
-  usesResource("TFileService");
+  //usesResource("TFileService");
 
   producerTag = iConfig.getUntrackedParameter<std::string>("producerTag");
 
@@ -261,6 +263,13 @@ EfficiencyTool_2018DQM::EfficiencyTool_2018DQM(const edm::ParameterSet &iConfig)
   };
   initialize();
 }
+
+  const std::vector<uint32_t> EfficiencyTool_2018DQM::romanPotIds = {0, 1, 2, 3, 4, 5, 6};
+  const std::vector<uint32_t> EfficiencyTool_2018DQM::armIds = {0, 1};
+  const std::vector<uint32_t> EfficiencyTool_2018DQM::stationIds = {0, 1};
+  const std::vector<uint32_t> EfficiencyTool_2018DQM::planeIds = {0, 1, 2, 3};
+
+
 EfficiencyTool_2018DQM::~EfficiencyTool_2018DQM() {
   delete h1BunchCrossing_;
   delete h1CrossingAngle_;
@@ -274,8 +283,6 @@ EfficiencyTool_2018DQM::~EfficiencyTool_2018DQM() {
     delete h2TrackEfficiencyMap_[rpId];
     delete h2TrackEfficiencyErrorMap_[rpId];
     delete h1NumberOfTracks_[rpId];
-    delete g1X0Correlation_[rpId];
-    delete g1Y0Correlation_[rpId];
     delete h2X0Correlation_[rpId];
     delete h2Y0Correlation_[rpId];
 
@@ -339,9 +346,9 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
           for(auto& rp: romanPotIds)
           {
               std::string romanPotBinShiftFolderName = Form("Arm%i_st%i_rp%i/BinShift", arm, station, rp);
-              ibooker->mkdir(romanPotFolderName.data());
+              ibooker.setCurrentFolder(romanPotBinShiftFolderName);
               CTPPSPixelDetId rpId(arm, station, rp);
-              setGlobalBinSizes(rpId);
+              double binSize = setGlobalBinSizes(rpId);
               romanPotIdVector_.push_back(rpId);
               h2TrackHitDistribution_[rpId] = ibooker.book2DD(
                   Form("h2TrackHitDistribution_arm%i_st%i_rp%i", arm, station, rp),
@@ -430,9 +437,9 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
                     Form("h1ConsecutivePlanes_arm%i_st%i_rp%i; #sigma_{Ty};", arm,
                         station, rp),
                     2, 0, 2);
-                h1ConsecutivePlanes_[rpId]->GetXaxis()->SetBinLabel(1,
+                h1ConsecutivePlanes_[rpId]->getTH2D()->GetXaxis()->SetBinLabel(1,
                                                                     "Non-consecutive");
-                h1ConsecutivePlanes_[rpId]->GetXaxis()->SetBinLabel(2, "Consecutive");
+                h1ConsecutivePlanes_[rpId]->getTH2D()->GetXaxis()->SetBinLabel(2, "Consecutive");
               }
               if (station == 0) {
                 h2TrackEfficiencyMap_rotated[rpId] = ibooker.book2DD(
@@ -543,7 +550,7 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
 }
 
 
-void EfficiencyTool_2018DQM::setGlobalBinSizes(CTPPSPixelDetId& rpId)
+double EfficiencyTool_2018DQM::setGlobalBinSizes(CTPPSPixelDetId& rpId)
 {
   uint32_t station = rpId.station();
   if (station == 2) {
@@ -571,9 +578,13 @@ void EfficiencyTool_2018DQM::setGlobalBinSizes(CTPPSPixelDetId& rpId)
     double binSize = (mapXmax - mapXmin) / mapXbins;
     mapXmin += binAlignmentParameters[rpId] * binSize / 150.;
     mapXmax += binAlignmentParameters[rpId] * binSize / 150.;
+    return binSize;
 }
 
-
+void EfficiencyTool_2018DQM::dqmBeginRun(edm::Run const &, edm::EventSetup const &)
+{
+  
+}
 void EfficiencyTool_2018DQM::analyze(const edm::Event &iEvent,
                                   const edm::EventSetup &iSetup) {
   using namespace edm;
