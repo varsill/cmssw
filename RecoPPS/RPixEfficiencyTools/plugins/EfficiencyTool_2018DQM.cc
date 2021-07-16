@@ -437,9 +437,9 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
                     Form("h1ConsecutivePlanes_arm%i_st%i_rp%i; #sigma_{Ty};", arm,
                         station, rp),
                     2, 0, 2);
-                h1ConsecutivePlanes_[rpId]->getTH2D()->GetXaxis()->SetBinLabel(1,
+                h1ConsecutivePlanes_[rpId]->getTH1D()->GetXaxis()->SetBinLabel(1,
                                                                     "Non-consecutive");
-                h1ConsecutivePlanes_[rpId]->getTH2D()->GetXaxis()->SetBinLabel(2, "Consecutive");
+                h1ConsecutivePlanes_[rpId]->getTH1D()->GetXaxis()->SetBinLabel(2, "Consecutive");
               }
               if (station == 0) {
                 h2TrackEfficiencyMap_rotated[rpId] = ibooker.book2DD(
@@ -583,7 +583,7 @@ double EfficiencyTool_2018DQM::setGlobalBinSizes(CTPPSPixelDetId& rpId)
 
 void EfficiencyTool_2018DQM::dqmBeginRun(edm::Run const &, edm::EventSetup const &)
 {
-  
+
 }
 void EfficiencyTool_2018DQM::analyze(const edm::Event &iEvent,
                                   const edm::EventSetup &iSetup) {
