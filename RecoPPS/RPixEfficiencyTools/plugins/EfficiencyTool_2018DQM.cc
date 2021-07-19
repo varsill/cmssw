@@ -41,6 +41,7 @@
 #include <exception>
 #include <fstream>
 #include <memory>
+#include<set>
 
 
 class EfficiencyTool_2018DQM: public DQMEDAnalyzer {
@@ -52,7 +53,6 @@ public:
 protected:
   virtual void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
   virtual void dqmBeginRun(edm::Run const &, edm::EventSetup const &) override;
-
 private:
   virtual void analyze(const edm::Event &, const edm::EventSetup &) override;
   void endJob();
@@ -87,6 +87,7 @@ private:
   double setGlobalBinSizes(CTPPSPixelDetId& rpId);
 
 
+  std::set<CTPPSPixelDetId> detectorIdsSet_;
   static const std::vector<uint32_t> romanPotIds;
   static const std::vector<uint32_t> armIds;
   static const std::vector<uint32_t> stationIds;
@@ -266,14 +267,14 @@ EfficiencyTool_2018DQM::EfficiencyTool_2018DQM(const edm::ParameterSet &iConfig)
 
   const std::vector<uint32_t> EfficiencyTool_2018DQM::romanPotIds = {0, 1, 2, 3, 4, 5, 6};
   const std::vector<uint32_t> EfficiencyTool_2018DQM::armIds = {0, 1};
-  const std::vector<uint32_t> EfficiencyTool_2018DQM::stationIds = {0, 1};
-  const std::vector<uint32_t> EfficiencyTool_2018DQM::planeIds = {0, 1, 2, 3};
+  const std::vector<uint32_t> EfficiencyTool_2018DQM::stationIds = {0, 1, 2};
+  const std::vector<uint32_t> EfficiencyTool_2018DQM::planeIds = {0, 1, 2, 3, 4, 5};
 
 
 EfficiencyTool_2018DQM::~EfficiencyTool_2018DQM() {
   delete h1BunchCrossing_;
   delete h1CrossingAngle_;
-  for (const auto &rpId : romanPotIdVector_) {
+  for (const auto &rpId : detectorIdsSet_) {
     delete h2TrackHitDistribution_[rpId];
     if (supplementaryPlots) {
       for (auto binShift : binShifts_)
@@ -336,8 +337,8 @@ EfficiencyTool_2018DQM::~EfficiencyTool_2018DQM() {
 void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const & run, edm::EventSetup const & eventSetup)
 {
       ibooker.cd();
-      h1BunchCrossing_ = ibooker.book1D("h1BunchCrossing", "h1BunchCrossing", totalNumberOfBunches_, 0., totalNumberOfBunches_);
-      h1CrossingAngle_ = ibooker.book1D("h1CrossingAngle", "h1CrossingAngle", 70, 100., 170);
+      h1BunchCrossing_ = ibooker.book1DD("h1BunchCrossing", "h1BunchCrossing", totalNumberOfBunches_, 0., totalNumberOfBunches_);
+      h1CrossingAngle_ = ibooker.book1DD("h1CrossingAngle", "h1CrossingAngle", 70, 100., 170);
       
       for(auto& arm: armIds)
       {
@@ -349,7 +350,7 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
               ibooker.setCurrentFolder(romanPotBinShiftFolderName);
               CTPPSPixelDetId rpId(arm, station, rp);
               double binSize = setGlobalBinSizes(rpId);
-              romanPotIdVector_.push_back(rpId);
+              detectorIdsSet_.insert(rpId);
               h2TrackHitDistribution_[rpId] = ibooker.book2DD(
                   Form("h2TrackHitDistribution_arm%i_st%i_rp%i", arm, station, rp),
                   Form("h2TrackHitDistribution_arm%i_st%i_rp%i;x (mm);y (mm)", arm,
@@ -371,7 +372,7 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
                   Form("h2TrackEfficiencyErrorMap_arm%i_st%i_rp%i; x (mm); y (mm)", arm,
                       station, rp),
                   mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-              h1NumberOfTracks_[rpId] = ibooker.book1D(
+              h1NumberOfTracks_[rpId] = ibooker.book1DD(
                   Form("h1NumberOfTracks_arm%i_st%i_rp%i", arm, station, rp),
                   Form("h1NumberOfTracks_arm%i_st%i_rp%i; Tracks;", arm, station, rp),
                   16, -0.5, 15.5);
@@ -391,11 +392,11 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
                             Form("h2AvgPlanesUsed_arm%i_st%i_rp%i; x (mm); y (mm)",
                                   arm, station, rp),
                             mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                h1PlanesUsed_[rpId] = ibooker.book1D(
+                h1PlanesUsed_[rpId] = ibooker.book1DD(
                     Form("h1PlanesUsed_arm%i_st%i_rp%i", arm, station, rp),
                     Form("h1PlanesUsed_arm%i_st%i_rp%i; Planes", arm, station, rp), 7,
                     -0.5, 6.5);
-                h1ChiSquaredOverNDF_[rpId] = ibooker.book1D(
+                h1ChiSquaredOverNDF_[rpId] = ibooker.book1DD(
                     Form("h1ChiSquaredOverNDF_arm%i_st%i_rp%i", arm, station, rp),
                     Form("h1ChiSquaredOverNDF_arm%i_st%i_rp%i; Planes", arm, station,
                         rp),
@@ -405,26 +406,26 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
                     // std::cout << "Creating hist " << nPlanes << " " << numberOfCls <<
                     // "Arm " << arm << "Station " << station <<std::endl;
                     h1X0Sigma[rpId][std::pair(nPlanes, numberOfCls)] =
-                        ibooker.book1D(Form("h1X0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm,
+                        ibooker.book1DD(Form("h1X0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm,
                                       station, rp, nPlanes, numberOfCls),
                                 Form("h1X0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; "
                                       "#sigma_{x} (mm);",
                                       arm, station, rp, nPlanes, numberOfCls),
                                 100, 0, 0.1);
                     h1Y0Sigma[rpId][std::pair(nPlanes, numberOfCls)] =
-                        ibooker.book1D(Form("h1Y0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm,
+                        ibooker.book1DD(Form("h1Y0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm,
                                       station, rp, nPlanes, numberOfCls),
                                 Form("h1Y0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; "
                                       "#sigma_{y} (mm);",
                                       arm, station, rp, nPlanes, numberOfCls),
                                 100, 0, 0.1);
-                    h1TxSigma[rpId][std::pair(nPlanes, numberOfCls)] = ibooker.book1D(
+                    h1TxSigma[rpId][std::pair(nPlanes, numberOfCls)] = ibooker.book1DD(
                         Form("h1TxSigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm, station,
                             rp, nPlanes, numberOfCls),
                         Form("h1TxSigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; #sigma_{Tx};",
                             arm, station, rp, nPlanes, numberOfCls),
                         100, 0, 0.02);
-                    h1TySigma[rpId][std::pair(nPlanes, numberOfCls)] = ibooker.book1D(
+                    h1TySigma[rpId][std::pair(nPlanes, numberOfCls)] = ibooker.book1DD(
                         Form("h1TySigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm, station,
                             rp, nPlanes, numberOfCls),
                         Form("h1TySigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; #sigma_{Ty};",
@@ -432,7 +433,7 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
                         100, 0, 0.02);
                   }
                 }
-                h1ConsecutivePlanes_[rpId] = ibooker.book1D(
+                h1ConsecutivePlanes_[rpId] = ibooker.book1DD(
                     Form("h1ConsecutivePlanes_arm%i_st%i_rp%i", arm, station, rp),
                     Form("h1ConsecutivePlanes_arm%i_st%i_rp%i; #sigma_{Ty};", arm,
                         station, rp),
@@ -485,6 +486,7 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
               for(auto& plane: planeIds)
               {
                 rpId = CTPPSPixelDetId(arm, station, rp, plane);
+                
                 h2ModuleHitMap_[rpId] = ibooker.book2DD(
                     Form("h2ModuleHitMap_arm%i_st%i_rp%i_pl%i", arm, station, rp,
                         plane),
@@ -625,8 +627,9 @@ void EfficiencyTool_2018DQM::analyze(const edm::Event &iEvent,
         continue;
       if (!pixeltrack.isValid())
         continue;
+      //std::cout<<rpId.arm()<<" "<<rpId.station()<<" "<<rpId.rp()<<" "<<rpId.plane()<<std::endl;
       h1NumberOfTracks_[rpId]->Fill(rpPixeltrack.size());
-
+      
       float pixelX0 = pixeltrack.x0();
       float pixelY0 = pixeltrack.y0();
       int numberOfRowCls2 = 0;
@@ -656,6 +659,7 @@ void EfficiencyTool_2018DQM::analyze(const edm::Event &iEvent,
       for (const auto &planeHits : fittedHits) {
         CTPPSPixelDetId planeId = CTPPSPixelDetId(planeHits.detId());
         uint32_t plane = planeId.plane();
+        planeId = CTPPSPixelDetId(arm, station, rp, plane);  
         
 
         for (const auto &hit : planeHits) {
