@@ -41,7 +41,7 @@
 #include <exception>
 #include <fstream>
 #include <memory>
-#include<set>
+#include <set>
 
 
 class EfficiencyTool_2018DQM: public DQMEDAnalyzer {
@@ -51,13 +51,11 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions &descriptions);
 
 protected:
-  virtual void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
   virtual void dqmBeginRun(edm::Run const &, edm::EventSetup const &) override;
 private:
 };
 
 EfficiencyTool_2018DQM::EfficiencyTool_2018DQM(const edm::ParameterSet &iConfig) {
-  //usesResource("TFileService");
 
 
 }

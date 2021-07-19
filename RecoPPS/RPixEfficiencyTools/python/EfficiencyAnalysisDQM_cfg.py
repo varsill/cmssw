@@ -158,6 +158,7 @@ elif runNumber > lastRunOfTheYear:
     print("This run doesn't belong to 2018 data taking")
 
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+process.load("DQM.Integration.config.environment_cfi")
 process.load("DQMServices.Core.DQM_cfg")
 from Configuration.AlCa.GlobalTag import GlobalTag
 from CondCore.CondDB.CondDB_cfi import *
@@ -187,4 +188,10 @@ process.demo = DQMEDAnalyzer('EfficiencyTool_2018DQM',
     customParameterTest=cms.string("my custom parameter value")
 )
 
+
+process.dqmSaver.path = "OutputFiles/"
+
 process.p = cms.Path(process.demo)
+process.end_path = cms.EndPath(
+    process.dqmSaver
+)
