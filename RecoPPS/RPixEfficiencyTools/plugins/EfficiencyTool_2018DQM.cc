@@ -57,6 +57,7 @@ private:
   virtual void analyze(const edm::Event &, const edm::EventSetup &) override;
   void endJob();
   virtual void initialize();
+  void printMeans();
 
   // Computes the probability of having numberToExtract inefficient planes
   float
@@ -265,72 +266,32 @@ EfficiencyTool_2018DQM::EfficiencyTool_2018DQM(const edm::ParameterSet &iConfig)
   initialize();
 }
 
-  const std::vector<uint32_t> EfficiencyTool_2018DQM::romanPotIds = {0, 1, 2, 3, 4, 5, 6};
+  const std::vector<uint32_t> EfficiencyTool_2018DQM::romanPotIds = {3};
   const std::vector<uint32_t> EfficiencyTool_2018DQM::armIds = {0, 1};
-  const std::vector<uint32_t> EfficiencyTool_2018DQM::stationIds = {0, 1, 2};
+  const std::vector<uint32_t> EfficiencyTool_2018DQM::stationIds = {0, 2};
   const std::vector<uint32_t> EfficiencyTool_2018DQM::planeIds = {0, 1, 2, 3, 4, 5};
 
+void EfficiencyTool_2018DQM::printMeans()
+{
+  for(auto& arm: armIds)
+  {
+    for(auto& station: stationIds)
+    {
+      for(auto& rp: romanPotIds)
+      {
+          for(auto& plane: planeIds)
+          {
+            CTPPSPixelDetId detId(arm, station, rp, plane);
+            std::cout<<"WORKER: "<<h2AuxEfficiencyMap_[detId]->getMean(1)<<std::endl;
+          }
+      }
+    }
+  }
+}
 
 EfficiencyTool_2018DQM::~EfficiencyTool_2018DQM() {
-  delete h1BunchCrossing_;
-  delete h1CrossingAngle_;
-  for (const auto &rpId : detectorIdsSet_) {
-    delete h2TrackHitDistribution_[rpId];
-    if (supplementaryPlots) {
-      for (auto binShift : binShifts_)
-        delete h2TrackHitDistributionBinShift_[binShift][rpId];
-    }
-    delete h23PointsTrackHitDistribution_[rpId];
-    delete h2TrackEfficiencyMap_[rpId];
-    delete h2TrackEfficiencyErrorMap_[rpId];
-    delete h1NumberOfTracks_[rpId];
-    delete h2X0Correlation_[rpId];
-    delete h2Y0Correlation_[rpId];
 
-    if (supplementaryPlots) {
-      for (int nPlanes = 3; nPlanes <= 6; nPlanes++) {
-        for (int numberOfCls = 0; numberOfCls <= nPlanes; numberOfCls++) {
-          // std::cout << "Deleting hist " << nPlanes << " " << numberOfCls <<
-          // std::endl;
-          delete h1X0Sigma[rpId][std::pair(nPlanes, numberOfCls)];
-          delete h1Y0Sigma[rpId][std::pair(nPlanes, numberOfCls)];
-          delete h1TxSigma[rpId][std::pair(nPlanes, numberOfCls)];
-          delete h1TySigma[rpId][std::pair(nPlanes, numberOfCls)];
-        }
-      }
-      delete h2AvgPlanesUsed_[rpId];
-      delete h1PlanesUsed_[rpId];
-      delete h1ChiSquaredOverNDF_[rpId];
-      delete h1ConsecutivePlanes_[rpId];
-    }
 
-    if (rpId.station() == 0) {
-      delete h2TrackEfficiencyMap_rotated[rpId];
-      delete h2TrackEfficiencyErrorMap_rotated[rpId];
-      if (supplementaryPlots) {
-        delete h2TrackHitDistribution_rotated[rpId];
-        for (auto binShift : binShifts_)
-          delete h2TrackHitDistributionBinShift_rotated[binShift][rpId];
-        delete h2AvgPlanesUsed_rotated[rpId];
-      }
-    }
-  }
-
-  for (const auto &detId : detectorIdVector_) {
-    delete h2ModuleHitMap_[detId];
-    delete h2EfficiencyNormalizationMap_[detId];
-    delete h2EfficiencyMap_[detId];
-    delete h2AuxEfficiencyMap_[detId];
-
-    if (detId.station() == 0) {
-      delete h2EfficiencyNormalizationMap_rotated[detId];
-      delete h2EfficiencyMap_rotated[detId];
-      delete h2AuxEfficiencyMap_rotated[detId];
-      if (supplementaryPlots) {
-        delete h2ModuleHitMap_rotated[detId];
-      }
-    }
-  }
 }
 
 
@@ -346,7 +307,7 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
         {
           for(auto& rp: romanPotIds)
           {
-              std::string romanPotBinShiftFolderName = Form("Arm%i_st%i_rp%i/BinShift", arm, station, rp);
+              std::string romanPotBinShiftFolderName = Form("Arm%i/st%i/rp%i", arm, station, rp);
               ibooker.setCurrentFolder(romanPotBinShiftFolderName);
               CTPPSPixelDetId rpId(arm, station, rp);
               double binSize = setGlobalBinSizes(rpId);
@@ -549,6 +510,7 @@ void EfficiencyTool_2018DQM::bookHistograms(DQMStore::IBooker& ibooker, edm::Run
           }
         }
       }
+      ibooker.cd();
 }
 
 
@@ -806,6 +768,8 @@ void EfficiencyTool_2018DQM::analyze(const edm::Event &iEvent,
       }
     }
   }
+  
+  printMeans();
 }
 
 void EfficiencyTool_2018DQM::initialize() {
@@ -872,255 +836,6 @@ void EfficiencyTool_2018DQM::initialize() {
       validBunchArray_[i] = filledBunchArray[i];
   }
 }
-
-// void EfficiencyTool_2018DQM::endJob() {
-//   outputFile_ = new TFile(outputFileName_.data(), "RECREATE");
-//   std::cout << "Saving output in: " << outputFile_->GetName() << std::endl;
-//   h1BunchCrossing_->Write();
-//   h1CrossingAngle_->Write();
-//   for (const auto &rpId : romanPotIdVector_) {
-//     uint32_t arm = rpId.arm();
-//     uint32_t rp = rpId.rp();
-//     uint32_t station = rpId.station();
-//     if (station == 2) {
-//       mapXbins = mapXbins_st2;
-//       mapXmin = mapXmin_st2;
-//       mapXmax = mapXmax_st2;
-//       mapYbins = mapYbins_st2;
-//       mapYmin = mapYmin_st2;
-//       mapYmax = mapYmax_st2;
-//       fitXmin = fitXmin_st2;
-//       fitXmax = fitXmax_st2;
-//     } else {
-//       mapXbins = mapXbins_st0;
-//       mapXmin = mapXmin_st0;
-//       mapXmax = mapXmax_st0;
-//       mapYbins = mapYbins_st0;
-//       mapYmin = mapYmin_st0;
-//       mapYmax = mapYmax_st0;
-//       fitXmin = fitXmin_st0;
-//       fitXmax = fitXmax_st0;
-//     }
-
-//     std::string romanPotFolderName = Form("Arm%i_st%i_rp%i", arm, station, rp);
-//     std::string romanPotBinShiftFolderName =
-//         Form("Arm%i_st%i_rp%i/BinShift", arm, station, rp);
-//     // std::cout << "Creating directory for: " << romanPotFolderName <<
-//     // std::endl;
-
-//     outputFile_->mkdir(romanPotFolderName.data());
-//     outputFile_->cd(romanPotFolderName.data());
-//     h2TrackHitDistribution_[rpId]->Write();
-//     if (supplementaryPlots) {
-//       outputFile_->mkdir(romanPotBinShiftFolderName.data());
-//       outputFile_->cd(romanPotBinShiftFolderName.data());
-//       for (auto binShift : binShifts_) {
-//         h2TrackHitDistributionBinShift_[binShift][rpId]->Write();
-//         if (station == 0) {
-//           h2TrackHitDistributionBinShift_rotated[binShift][rpId]->Write();
-//         }
-//       }
-//       outputFile_->cd(romanPotFolderName.data());
-//     }
-
-//     h23PointsTrackHitDistribution_[rpId]->Write();
-//     // h2X0Correlation_[rpId]->Write();
-//     // h2Y0Correlation_[rpId]->Write();
-//     if (isCorrelationPlotEnabled) {
-//       // g1X0Correlation_[rpId]->Write();
-//       // g1Y0Correlation_[rpId]->Write();
-//     }
-//   }
-
-//   for (const auto &detId : detectorIdVector_) {
-//     uint32_t arm = detId.arm();
-//     uint32_t rp = detId.rp();
-//     uint32_t station = detId.station();
-//     uint32_t plane = detId.plane();
-//     std::string planeFolderName =
-//         Form("Arm%i_st%i_rp%i/Arm%i_st%i_rp%i_pl%i", arm, station, rp, arm,
-//              station, rp, plane);
-//     // std::cout << "Creating directory for: " << planeFolderName << std::endl;
-//     outputFile_->mkdir(planeFolderName.data());
-//     // std::cout << "Created directory for: " << planeFolderName << std::endl;
-//     outputFile_->cd(planeFolderName.data());
-
-//     h2ModuleHitMap_[detId]->Write();
-//     h2EfficiencyMap_[detId]->Divide(h2AuxEfficiencyMap_[detId],
-//                                     h2EfficiencyNormalizationMap_[detId], 1.,
-//                                     1., "B");
-//     h2EfficiencyMap_[detId]->SetMaximum(1.);
-//     h2EfficiencyMap_[detId]->Write();
-
-//     if (station == 0) {
-//       h2EfficiencyMap_rotated[detId]->Divide(
-//           h2AuxEfficiencyMap_rotated[detId],
-//           h2EfficiencyNormalizationMap_rotated[detId], 1., 1., "B");
-//       h2EfficiencyMap_rotated[detId]->SetMaximum(1.);
-//       h2EfficiencyMap_rotated[detId]->Write();
-//       if (supplementaryPlots)
-//         h2ModuleHitMap_rotated[detId]->Write();
-//     }
-//   }
-
-//   for (const auto &rpId : romanPotIdVector_) {
-//     uint32_t arm = rpId.arm();
-//     uint32_t rp = rpId.rp();
-//     uint32_t station = rpId.station();
-//     if (station == 2) {
-//       mapXbins = mapXbins_st2;
-//       mapXmin = mapXmin_st2;
-//       mapXmax = mapXmax_st2;
-//       mapYbins = mapYbins_st2;
-//       mapYmin = mapYmin_st2;
-//       mapYmax = mapYmax_st2;
-//       fitXmin = fitXmin_st2;
-//       fitXmax = fitXmax_st2;
-//     } else {
-//       mapXbins = mapXbins_st0;
-//       mapXmin = mapXmin_st0;
-//       mapXmax = mapXmax_st0;
-//       mapYbins = mapYbins_st0;
-//       mapYmin = mapYmin_st0;
-//       mapYmax = mapYmax_st0;
-//       fitXmin = fitXmin_st0;
-//       fitXmax = fitXmax_st0;
-//     }
-
-//     std::string romanPotFolderName = Form("Arm%i_st%i_rp%i", arm, station, rp);
-//     outputFile_->cd(romanPotFolderName.data());
-//     for (int xBin = 1; xBin <= mapXbins; ++xBin) {
-//       for (int yBin = 1; yBin <= mapYbins; ++yBin) {
-//         std::map<uint32_t, float> planeEfficiency;
-//         std::map<uint32_t, float> planeEfficiencyError;
-//         std::map<uint32_t, float> planeEfficiency_rotated;
-//         std::map<uint32_t, float> planeEfficiencyError_rotated;
-
-//         for (const auto &plane : listOfPlanes_) {
-//           CTPPSPixelDetId planeId = CTPPSPixelDetId(rpId);
-//           planeId.setPlane(plane);
-//           planeEfficiency[plane] =
-//               h2EfficiencyMap_[planeId]->GetBinContent(xBin, yBin);
-//           planeEfficiencyError[plane] =
-//               h2EfficiencyMap_[planeId]->GetBinError(xBin, yBin);
-//           if (station == 0) {
-//             planeEfficiency_rotated[plane] =
-//                 h2EfficiencyMap_rotated[planeId]->GetBinContent(xBin, yBin);
-//             planeEfficiencyError_rotated[plane] =
-//                 h2EfficiencyMap_rotated[planeId]->GetBinError(xBin, yBin);
-//           }
-
-//           // if(plane == 0){
-//           // 	planeEfficiency[plane] = 1.;
-//           // 	if(station==0) planeEfficiency_rotated[plane] = 1.;
-//           // }
-//           // if(plane == 1){
-//           // 	planeEfficiency[plane] = 1.;
-//           // 	if(station==0) planeEfficiency_rotated[plane] = 1.;
-//           // }
-//           // if(plane == 2){
-//           // 	planeEfficiency[plane] = 1.;
-//           // 	if(station==0) planeEfficiency_rotated[plane] = 1.;
-//           // }
-//           // if(plane == 3){
-//           // 	planeEfficiency[plane] = 1.;
-//           // 	if(station==0) planeEfficiency_rotated[plane] = 1.;
-//           // }
-//           // if(plane == 4){
-//           // 	planeEfficiency[plane] = 1.;
-//           // 	if(station==0) planeEfficiency_rotated[plane] = 1.;
-//           // }
-//           // if(plane == 5){
-//           // 	planeEfficiency[plane] = 0.;
-//           // 	if(station==0) planeEfficiency_rotated[plane] = 0.;
-//           // }
-//         }
-//         float efficiency = probabilityCalculation(planeEfficiency);
-//         float efficiencyError =
-//             errorCalculation(planeEfficiency, planeEfficiencyError);
-//         h2TrackEfficiencyMap_[rpId]->SetBinContent(xBin, yBin, efficiency);
-//         h2TrackEfficiencyMap_[rpId]->SetBinError(xBin, yBin, efficiencyError);
-//         h2TrackEfficiencyErrorMap_[rpId]->SetBinContent(xBin, yBin,
-//                                                         efficiencyError);
-//         if (station == 0) {
-//           float efficiency_rotated =
-//               probabilityCalculation(planeEfficiency_rotated);
-//           float efficiencyError_rotated = errorCalculation(
-//               planeEfficiency_rotated, planeEfficiencyError_rotated);
-//           h2TrackEfficiencyMap_rotated[rpId]->SetBinContent(xBin, yBin,
-//                                                             efficiency_rotated);
-//           h2TrackEfficiencyMap_rotated[rpId]->SetBinError(
-//               xBin, yBin, efficiencyError_rotated);
-//           h2TrackEfficiencyErrorMap_rotated[rpId]->SetBinContent(
-//               xBin, yBin, efficiencyError_rotated);
-//         }
-//       }
-//     }
-//     h2TrackEfficiencyMap_[rpId]->Write();
-//     h2TrackEfficiencyErrorMap_[rpId]->Write();
-//     if (supplementaryPlots) {
-//       outputFile_->mkdir((romanPotFolderName + "/ResolutionHistograms").data());
-//       // std::cout << (romanPotFolderName+"/ResolutionHistograms").data() <<
-//       // std::endl;
-//       outputFile_->cd((romanPotFolderName + "/ResolutionHistograms").data());
-//       for (int nPlanes = 3; nPlanes <= 6; nPlanes++) {
-//         for (int numberOfCls = 0; numberOfCls <= nPlanes; numberOfCls++) {
-//           h1X0Sigma[rpId][std::pair(nPlanes, numberOfCls)]->Write();
-//           h1Y0Sigma[rpId][std::pair(nPlanes, numberOfCls)]->Write();
-//           h1TxSigma[rpId][std::pair(nPlanes, numberOfCls)]->Write();
-//           h1TySigma[rpId][std::pair(nPlanes, numberOfCls)]->Write();
-//         }
-//       }
-
-//       outputFile_->cd(romanPotFolderName.data());
-
-//       h1NumberOfTracks_[rpId]->Write();
-//       h2AvgPlanesUsed_[rpId]->Divide(h2TrackHitDistribution_[rpId]);
-//       h2AvgPlanesUsed_[rpId]->Write();
-//       h1PlanesUsed_[rpId]->Write();
-//       h1ChiSquaredOverNDF_[rpId]->Write();
-//       h1ConsecutivePlanes_[rpId]->Write();
-//     }
-//     if (station == 0) {
-//       h2TrackEfficiencyMap_rotated[rpId]->Write();
-//       h2TrackEfficiencyErrorMap_rotated[rpId]->Write();
-//       if (supplementaryPlots) {
-//         h2TrackHitDistribution_rotated[rpId]->Write();
-//         h2AvgPlanesUsed_rotated[rpId]->Divide(
-//             h2TrackHitDistribution_rotated[rpId]);
-//         h2AvgPlanesUsed_rotated[rpId]->Write();
-//       }
-//     }
-//     if (supplementaryPlots && station != 0) {
-//       TObjArray slices;
-//       TF1 *fGaus = new TF1("fGaus", "gaus", mapYmin, mapYmax);
-//       h2TrackHitDistribution_[rpId]->FitSlicesY(fGaus, 1, mapXbins, 0, "QNG3",
-//                                                 &slices);
-//       delete fGaus;
-//       ((TH1D *)slices[0])->Write();
-//       ((TH1D *)slices[1])->Write();
-//       ((TH1D *)slices[2])->Write();
-//       ((TH1D *)slices[3])->Write();
-//     }
-//     if (supplementaryPlots && station == 0) {
-//       TObjArray slices;
-//       TF1 *fGaus = new TF1("fGaus", "gaus", mapYmin, mapYmax);
-//       h2TrackHitDistribution_rotated[rpId]->FitSlicesY(fGaus, 1, mapXbins, 0,
-//                                                        "QNG3", &slices);
-//       delete fGaus;
-//       ((TH1D *)slices[0])->Write();
-//       ((TH1D *)slices[1])->Write();
-//       ((TH1D *)slices[2])->Write();
-//       ((TH1D *)slices[3])->Write();
-//     }
-//   }
-
-//   if (isCorrelationPlotEnabled)
-//     std::cout << "ATTENTION: Remember to insert the fitting parameters in the "
-//                  "python configuration"
-//               << std::endl;
-//   outputFile_->Close();
-// }
 
 void EfficiencyTool_2018DQM::fillDescriptions(
     edm::ConfigurationDescriptions &descriptions) {

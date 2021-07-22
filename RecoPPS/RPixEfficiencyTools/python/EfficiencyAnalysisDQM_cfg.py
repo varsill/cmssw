@@ -80,6 +80,7 @@ process.MessageLogger.statistics = cms.untracked.vstring()
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
+
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
     fileNames = inputFiles
@@ -98,7 +99,7 @@ if options.useJsonFile == True:
     process.source.lumisToProcess = LumiList.LumiList(filename = jsonFileName).getVLuminosityBlockRange()
 
 runToScheme = {}
-with open("data/RunToScheme2018.csv") as runToSchemeFile:
+with open("./data/RunToScheme2018.csv") as runToSchemeFile:
     firstcycle = True
     next(runToSchemeFile)
     for line in runToSchemeFile:
@@ -107,7 +108,7 @@ with open("data/RunToScheme2018.csv") as runToSchemeFile:
 
 if options.bunchSelection != 'NoSelection' and options.bunchSelection != '':
     if options.runNumber in runToScheme.keys():
-        injectionSchemeFileName = 'data/2018_FillingSchemes/'+runToScheme[options.runNumber]+'.csv'
+        injectionSchemeFileName = './data/2018_FillingSchemes/'+runToScheme[options.runNumber]+'.csv'
     else:
         injectionSchemeFileName = options.injectionSchemeFileName
     print("Using filling scheme: "+injectionSchemeFileName)
@@ -159,14 +160,14 @@ elif runNumber > lastRunOfTheYear:
 
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load("DQM.Integration.config.environment_cfi")
-process.load("DQMServices.Core.DQM_cfg")
+
 from Configuration.AlCa.GlobalTag import GlobalTag
 from CondCore.CondDB.CondDB_cfi import *
 
 # Global tag
 process.GlobalTag = GlobalTag(process.GlobalTag, '113X_dataRun2_v6')
 
-process.demo = DQMEDAnalyzer('EfficiencyTool_2018DQM',
+process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQM',
     # outputFileName=cms.untracked.string("RPixAnalysis_RecoLocalTrack_ReferenceRunAfterTS2.root"),
     outputFileName=cms.untracked.string(options.outputFileName),
     minNumberOfPlanesForEfficiency=cms.int32(3),
@@ -188,10 +189,65 @@ process.demo = DQMEDAnalyzer('EfficiencyTool_2018DQM',
     customParameterTest=cms.string("my custom parameter value")
 )
 
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000))
+process.skipEvents=cms.untracked.PSet( input = cms.untracked.int32(800000))
 
-process.dqmSaver.path = "OutputFiles/"
+from DQMServices.Core.DQMEDHarvester import DQMEDHarvester
+process.harvester = DQMEDHarvester('EfficiencyTool_2018DQMHarvester')
 
-process.p = cms.Path(process.demo)
+
+# process.load("DQMServices.Components.DQMFileSaver_cfi")
+# process.dqmSaver.dirName = "OutputFiles/"
+# process.dqmSaver.forceRunNumber=cms.untracked.int32(999999)
+# process.dqmSaver.workflow=cms.untracked.string("/A/B/C")
+# process.dqmSaver.saveAtJobEnd=cms.untracked.bool(True)
+
+#STEP 1
+# process.dqmOutput = cms.OutputModule("DQMRootOutputModule",
+#     fileName = cms.untracked.string("OutputFiles/test.root")
+# )
+
+# process.path = cms.Path(
+#     process.worker
+# )
+
+# process.end_path = cms.EndPath(
+#     process.dqmOutput
+# )
+
+# process.schedule = cms.Schedule(
+#     process.path,
+#     process.end_path
+# )
+
+
+# STEP 2
+
+input_distributions = 'file:OutputFiles/test.root'
+process.source = cms.Source("DQMRootSource",
+    fileNames = cms.untracked.vstring(input_distributions),
+)
+
+
+# load DQM framework
+process.load("DQMServices.Components.DQMEnvironment_cfi")
+process.dqmEnv.subSystemFolder = "CalibPPS"
+process.dqmSaver.convention = 'Offline'
+process.dqmSaver.workflow = "/CalibPPS/AlignmentGlobal/CMSSW_11_3_0_pre4"
+process.dqmSaver.saveByRun = -1
+process.dqmSaver.saveAtJobEnd = True
+process.dqmSaver.forceRunNumber = 999999
+
+
+process.path = cms.Path(
+      process.harvester
+)
+
 process.end_path = cms.EndPath(
     process.dqmSaver
+)
+
+process.schedule = cms.Schedule(
+    process.path,
+    process.end_path
 )

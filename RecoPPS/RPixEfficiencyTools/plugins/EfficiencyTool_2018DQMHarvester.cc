@@ -1,10 +1,10 @@
 // -*- C++ -*-
 //
 // Package:    RecoPPS/RPixEfficiencyTools
-// Class:      EfficiencyTool_2018DQM
+// Class:      EfficiencyTool_2018DQMHarvester
 //
-/**\class EfficiencyTool_2018DQM EfficiencyTool_2018DQM.cc
- RecoPPS/RPixEfficiencyTools/plugins/EfficiencyTool_2018DQM.cc
+/**\class EfficiencyTool_2018DQMHarvester EfficiencyTool_2018DQMHarvester.cc
+ RecoPPS/RPixEfficiencyTools/plugins/EfficiencyTool_2018DQMHarvester.cc
 
  Description: [one line class summary]
 
@@ -24,7 +24,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
-#include "DQMServices/Core/interface/DQMEDAnalyzer.h"
+#include "DQMServices/Core/interface/DQMEDHarvester.h"
 #include "DQMServices/Core/interface/DQMStore.h"
 
 #include "CondFormats/RunInfo/interface/LHCInfo.h"
@@ -43,30 +43,114 @@
 #include <memory>
 #include <set>
 
+int binGroupingX = 1;
+int binGroupingY = 1;
+int mapXbins_st0 = 200 / binGroupingX;
+float mapXmin_st0 = 0. * TMath::Cos(18.4 / 180. * TMath::Pi());
+float mapXmax_st0 = 30. * TMath::Cos(18.4 / 180. * TMath::Pi());
+int mapYbins_st0 = 240 / binGroupingY;
+float mapYmin_st0 = -16.;
+float mapYmax_st0 = 8.;
+float fitXmin_st0 = 45.;
+float fitXmax_st0 = 58.;
 
-class EfficiencyTool_2018DQM: public DQMEDAnalyzer {
+int mapXbins = mapXbins_st0;
+float mapXmin = mapXmin_st0;
+float mapXmax = mapXmax_st0;
+int mapYbins = mapYbins_st0;
+float mapYmin = mapYmin_st0;
+float mapYmax = mapYmax_st0;
+float fitXmin = fitXmin_st0;
+float fitXmax = fitXmax_st0;
+
+class EfficiencyTool_2018DQMHarvester: public DQMEDHarvester{
 public:
-  explicit EfficiencyTool_2018DQM(const edm::ParameterSet &);
-  ~EfficiencyTool_2018DQM();
-  static void fillDescriptions(edm::ConfigurationDescriptions &descriptions);
+  explicit EfficiencyTool_2018DQMHarvester(const edm::ParameterSet &);
+  ~EfficiencyTool_2018DQMHarvester();
+  void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
 
-protected:
-  virtual void dqmBeginRun(edm::Run const &, edm::EventSetup const &) override;
 private:
+  static const std::vector<uint32_t> romanPotIds;
+  static const std::vector<uint32_t> armIds;
+  static const std::vector<uint32_t> stationIds;
+  static const std::vector<uint32_t> planeIds;
+
 };
 
-EfficiencyTool_2018DQM::EfficiencyTool_2018DQM(const edm::ParameterSet &iConfig) {
+  const std::vector<uint32_t> EfficiencyTool_2018DQMHarvester::romanPotIds = {3};
+  const std::vector<uint32_t> EfficiencyTool_2018DQMHarvester::armIds = {0, 1};
+  const std::vector<uint32_t> EfficiencyTool_2018DQMHarvester::stationIds = {0, 2};
+  const std::vector<uint32_t> EfficiencyTool_2018DQMHarvester::planeIds = {0, 1, 2, 3, 4, 5};
 
+EfficiencyTool_2018DQMHarvester::EfficiencyTool_2018DQMHarvester(const edm::ParameterSet &iConfig) {
+  
 
 }
 
 
 
 
-EfficiencyTool_2018DQM::~EfficiencyTool_2018DQM() {
+EfficiencyTool_2018DQMHarvester::~EfficiencyTool_2018DQMHarvester() {
   
 }
 
+void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQMStore::IGetter & igetter){
+  igetter.cd();
+  ibooker.cd();
+  MonitorElement* result = ibooker.book2DD("ptRatio", "pt ratio pf matched objects", mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+
+  for (int iBinX = 1; iBinX < 50; ++iBinX) {
+    for (int iBinY = 1; iBinY < 100; ++iBinY)
+    {
+        result->setBinContent(iBinX, iBinY, 1.);
+    }
+  }
+  for(auto& armId: armIds)
+  {
+    for(auto& stationId: stationIds)
+    {
+      for(auto& rpId: romanPotIds)
+      {
+        for(auto& planeId: planeIds)
+        {
+          std::string romanPotBinShiftFolderName = Form("Arm%i/st%i/rp%i", armId, stationId, rpId);
+          igetter.setCurrentFolder(romanPotBinShiftFolderName);
+          ibooker.setCurrentFolder(romanPotBinShiftFolderName);
+          //CTPPSPixelDetId detId = CTPPSPixelDetId(armId, stationId, rpId, planeId);
+          std::string resultName_ = Form("h2EfficiencyMap_arm%i_st%i_rp%i_pl%i", armId, stationId, rpId, planeId);
+          std::string numMonitorName_ = Form("h2AuxEfficiencyMap_arm%i_st%i_rp%i_pl%i", armId, stationId, rpId, planeId);
+          std::string denMonitorName_ = Form("h2EfficiencyNormalizationMap_arm%i_st%i_rp%i_pl%i", armId, stationId, rpId, planeId);
+          
+          MonitorElement* something = ibooker.book2DD(Form("h2EfficiencyMap_arm2%i_st%i_rp%i_pl%i", armId, stationId, rpId, planeId), Form("h2EfficiencyMap_arm%i_st%i_rp%i_pl%i", armId, stationId, rpId, planeId), mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+         
+          //MonitorElement *result = ibooker.get(romanPotBinShiftFolderName+"/"+resultName_);
+          //if(result==NULL)std::cout<<"result IS NONE"<<std::endl;
+          MonitorElement *numerator = igetter.get(romanPotBinShiftFolderName+"/"+numMonitorName_);
+          if(numerator==NULL)std::cout<<"numerator IS NONE"<<std::endl;
+          MonitorElement *denominator = igetter.get(romanPotBinShiftFolderName+"/"+denMonitorName_);
+          if(denominator==NULL)std::cout<<"denominator IS NONE"<<std::endl;
+          something->divide(numerator, denominator, 1., 1., "B");
+          //std::cout<<"HARVESTER: "<<numerator->getMean(1)<<std::endl;
+          // for (int iBinX = 1; iBinX < denominator->getNbinsX(); ++iBinX) {
+          //   for (int iBinY = 1; iBinY < denominator->getNbinsY(); ++iBinY)
+          //   {
+          //     double binContent = denominator->getBinContent(iBinX, iBinY);
+          //     //std::cout<<binContent<<std::endl;
+          //     if ( binContent == 0)
+          //       something->setBinContent(iBinX, iBinY, 0.);
+          //     else
+          //       something->setBinContent(iBinX, iBinY, numerator->getBinContent(iBinX, iBinY) / binContent);
+          //   } 
+          // }
+
+
+
+        }
+      }
+    }
+  }
+
+}
 
 
 
@@ -78,7 +162,7 @@ EfficiencyTool_2018DQM::~EfficiencyTool_2018DQM() {
 
 
 
-// void EfficiencyTool_2018DQM::endJob() {
+// void EfficiencyTool_2018DQMHarvester::endJob() {
 //   outputFile_ = new TFile(outputFileName_.data(), "RECREATE");
 //   std::cout << "Saving output in: " << outputFile_->GetName() << std::endl;
 //   h1BunchCrossing_->Write();
@@ -329,4 +413,4 @@ EfficiencyTool_2018DQM::~EfficiencyTool_2018DQM() {
 
 
 // define this as a plug-in
-DEFINE_FWK_MODULE(EfficiencyTool_2018DQM);
+DEFINE_FWK_MODULE(EfficiencyTool_2018DQMHarvester);
