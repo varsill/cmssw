@@ -94,14 +94,7 @@ EfficiencyTool_2018DQMHarvester::~EfficiencyTool_2018DQMHarvester() {
 void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQMStore::IGetter & igetter){
   igetter.cd();
   ibooker.cd();
-  MonitorElement* result = ibooker.book2DD("ptRatio", "pt ratio pf matched objects", mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
 
-  for (int iBinX = 1; iBinX < 50; ++iBinX) {
-    for (int iBinY = 1; iBinY < 100; ++iBinY)
-    {
-        result->setBinContent(iBinX, iBinY, 1.);
-    }
-  }
   for(auto& armId: armIds)
   {
     for(auto& stationId: stationIds)
@@ -120,7 +113,7 @@ void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQM
           MonitorElement *numerator = igetter.get(romanPotBinShiftFolderName+"/"+numMonitorName_);
           MonitorElement *denominator = igetter.get(romanPotBinShiftFolderName+"/"+denMonitorName_);
           MonitorElement *result = igetter.get(romanPotBinShiftFolderName+"/"+resultName_);
-          
+
           result->divide(numerator, denominator, 1., 1., "B");
 
           if(stationId==0)
