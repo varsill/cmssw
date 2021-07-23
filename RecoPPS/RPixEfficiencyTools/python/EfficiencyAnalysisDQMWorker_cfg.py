@@ -61,6 +61,11 @@ options.register('injectionSchemeFileName',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.bool,
                 "Injection scheme file name")
+options.register('suplementaryPlots',
+                False,
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.bool,
+                "should add bin shifted hitTrackDistribution")
 options.parseArguments()
 
 
@@ -179,7 +184,7 @@ process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
                                                                     #(disables filling of TGraph, reducing the output file size)
     minTracksPerEvent=cms.int32(0),
     maxTracksPerEvent=cms.int32(99),
-    supplementaryPlots=cms.bool(True),
+    supplementaryPlots=cms.bool(options.suplementaryPlots),
     bunchSelection=cms.untracked.string(options.bunchSelection),
     bunchListFileName=cms.untracked.string(injectionSchemeFileName),
     binGroupingX=cms.untracked.int32(1),

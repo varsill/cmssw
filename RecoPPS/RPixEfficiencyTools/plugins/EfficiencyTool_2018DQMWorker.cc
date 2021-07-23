@@ -119,8 +119,6 @@ private:
   std::map<CTPPSPixelDetId, MonitorElement *> h2AuxEfficiencyMap_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2EfficiencyNormalizationMap_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2TrackHitDistribution_;
-  std::map<int, std::map<CTPPSPixelDetId, MonitorElement *>>
-      h2TrackHitDistributionBinShift_;
   std::map<CTPPSPixelDetId, MonitorElement *> h23PointsTrackHitDistribution_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2TrackEfficiencyMap_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2TrackEfficiencyErrorMap_;
@@ -137,8 +135,6 @@ private:
   std::map<CTPPSPixelDetId, MonitorElement *> h2AuxEfficiencyMap_rotated;
   std::map<CTPPSPixelDetId, MonitorElement *> h2EfficiencyNormalizationMap_rotated;
   std::map<CTPPSPixelDetId, MonitorElement *> h2TrackHitDistribution_rotated;
-  std::map<int, std::map<CTPPSPixelDetId, MonitorElement *>>
-      h2TrackHitDistributionBinShift_rotated;
   std::map<CTPPSPixelDetId, MonitorElement *> h2TrackEfficiencyMap_rotated;
   std::map<CTPPSPixelDetId, MonitorElement *> h2TrackEfficiencyErrorMap_rotated;
   std::map<CTPPSPixelDetId, MonitorElement *> h2AvgPlanesUsed_rotated;
@@ -161,10 +157,6 @@ private:
   std::vector<CTPPSPixelDetId> romanPotIdVector_;
 
   std::vector<uint32_t> listOfPlanes_ = {0, 1, 2, 3, 4, 5};
-  std::vector<int> binShifts_ = {0,   5,   10,  15,  20,  25,  30,  35,  40, 45,
-                                 50,  55,  60,  65,  70,  75,  80,  85,  90, 95,
-                                 100, 105, 110, 115, 120, 125, 130, 135, 140};
-
   int binGroupingX = 1;
   int binGroupingY = 1;
 
@@ -303,8 +295,8 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
         {
           for(auto& rp: romanPotIds)
           {
-              std::string romanPotBinShiftFolderName = Form("Arm%i/st%i/rp%i", arm, station, rp);
-              ibooker.setCurrentFolder(romanPotBinShiftFolderName);
+              std::string romanPotFolderName = Form("Arm%i/st%i/rp%i", arm, station, rp);
+              ibooker.setCurrentFolder(romanPotFolderName);
               CTPPSPixelDetId rpId(arm, station, rp);
               double binSize = setGlobalBinSizes(rpId);
               detectorIdsSet_.insert(rpId);
@@ -334,16 +326,6 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
                   Form("h1NumberOfTracks_arm%i_st%i_rp%i; Tracks;", arm, station, rp),
                   16, -0.5, 15.5);
               if (supplementaryPlots) {
-                for (auto binShift : binShifts_) {
-                  h2TrackHitDistributionBinShift_[binShift][rpId] = ibooker.book2DD(
-                      Form("h2TrackHitDistributionBinShift_%i_arm%i_st%i_rp%i",
-                          binShift, arm, station, rp),
-                      Form("h2TrackHitDistributionBinShift_%i_arm%i_st%i_rp%i;x (mm);y "
-                          "(mm)",
-                          binShift, arm, station, rp),
-                      mapXbins, mapXmin + binShift * binSize / 150.,
-                      mapXmax + binShift * binSize / 150., mapYbins, mapYmin, mapYmax);
-                }
                 h2AvgPlanesUsed_[rpId] =
                     ibooker.book2DD(Form("h2AvgPlanesUsed_arm%i_st%i_rp%i", arm, station, rp),
                             Form("h2AvgPlanesUsed_arm%i_st%i_rp%i; x (mm); y (mm)",
@@ -421,17 +403,6 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
                                     "(mm);y (mm)",
                                     arm, station, rp),
                               mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                  for (auto binShift : binShifts_) {
-                    h2TrackHitDistributionBinShift_rotated[binShift][rpId] = ibooker.book2DD(
-                        Form(
-                            "h2TrackHitDistributionBinShift_rotated_%i_arm%i_st%i_rp%i",
-                            binShift, arm, station, rp),
-                        Form("h2TrackHitDistributionBinShift_rotated_%i_arm%i_st%i_rp%"
-                            "i;x (mm);y (mm)",
-                            binShift, arm, station, rp),
-                        mapXbins, mapXmin + binShift * binSize / 150,
-                        mapXmax + binShift * binSize / 150, mapYbins, mapYmin, mapYmax);
-                  }
                   h2AvgPlanesUsed_rotated[rpId] = ibooker.book2DD(
                       Form("h2AvgPlanesUsed_rotated_arm%i_st%i_rp%i", arm, station, rp),
                       Form("h2AvgPlanesUsed_rotated_arm%i_st%i_rp%i; x (mm); y (mm)",
@@ -656,12 +627,6 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
       }
 
       h2TrackHitDistribution_[rpId]->Fill(pixelX0, pixelY0);
-      if (supplementaryPlots) {
-        for (auto binShift : binShifts_) {
-          h2TrackHitDistributionBinShift_[binShift][rpId]->Fill(pixelX0,
-                                                                pixelY0);
-        }
-      }
 
       if (supplementaryPlots) {
         h2AvgPlanesUsed_[rpId]->Fill(pixelX0, pixelY0, numberOfFittedPoints);
@@ -687,10 +652,6 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
                                               numberOfFittedPoints);
           h2TrackHitDistribution_rotated[rpId]->Fill(pixelX0_rotated,
                                                      pixelY0_rotated);
-          for (auto binShift : binShifts_) {
-            h2TrackHitDistributionBinShift_rotated[binShift][rpId]->Fill(
-                pixelX0_rotated, pixelY0_rotated);
-          }
         }
       }
       if (numberOfFittedPoints == 3) {
