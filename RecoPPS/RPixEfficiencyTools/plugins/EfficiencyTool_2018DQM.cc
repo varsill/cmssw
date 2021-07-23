@@ -769,7 +769,7 @@ void EfficiencyTool_2018DQM::analyze(const edm::Event &iEvent,
     }
   }
   
-  printMeans();
+
 }
 
 void EfficiencyTool_2018DQM::initialize() {
