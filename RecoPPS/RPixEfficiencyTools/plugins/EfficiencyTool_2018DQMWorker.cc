@@ -82,10 +82,10 @@ private:
   float efficiencyPartialDerivativewrtPlane(
       uint32_t plane, const std::vector<uint32_t> &inputPlaneList,
       int numberToExtract, const std::map<unsigned, float> &planeEfficiency);
-
+      
   // Return true if a track should be discarded
   bool Cut(CTPPSPixelLocalTrack track, int arm, int station);
-  double setGlobalBinSizes(CTPPSPixelDetId& rpId);
+  void setGlobalBinSizes(CTPPSPixelDetId& rpId);
 
 
   std::set<CTPPSPixelDetId> detectorIdsSet_;
@@ -160,32 +160,17 @@ private:
   int binGroupingX = 1;
   int binGroupingY = 1;
 
-  int mapXbins_st2 = 200 / binGroupingX;
-  float mapXmin_st2 = 0. * TMath::Cos(18.4 / 180. * TMath::Pi());
-  float mapXmax_st2 = 30. * TMath::Cos(18.4 / 180. * TMath::Pi());
-  int mapYbins_st2 = 240 / binGroupingY;
-  float mapYmin_st2 = -16.;
-  float mapYmax_st2 = 8.;
-  float fitXmin_st2 = 6.;
-  float fitXmax_st2 = 19.;
 
-  int mapXbins_st0 = 200 / binGroupingX;
-  float mapXmin_st0 = 0. * TMath::Cos(18.4 / 180. * TMath::Pi());
-  float mapXmax_st0 = 30. * TMath::Cos(18.4 / 180. * TMath::Pi());
-  int mapYbins_st0 = 240 / binGroupingY;
-  float mapYmin_st0 = -16.;
-  float mapYmax_st0 = 8.;
-  float fitXmin_st0 = 45.;
-  float fitXmax_st0 = 58.;
 
-  int mapXbins = mapXbins_st0;
-  float mapXmin = mapXmin_st0;
-  float mapXmax = mapXmax_st0;
-  int mapYbins = mapYbins_st0;
-  float mapYmin = mapYmin_st0;
-  float mapYmax = mapYmax_st0;
-  float fitXmin = fitXmin_st0;
-  float fitXmax = fitXmax_st0;
+  int mapXbins = 200 / binGroupingX;
+  float mapXmin = 0. * TMath::Cos(angle / 180. * TMath::Pi());
+  float mapXmax = 30. * TMath::Cos(angle / 180. * TMath::Pi()); //18.4 is default angle
+  int mapYbins = 240 / binGroupingY;
+  float mapYmin = -16.;
+  float mapYmax = 8.;
+  float fitXmin = 45.;
+  float fitXmax = 58.;
+
 
   std::map<CTPPSPixelDetId, int> binAlignmentParameters = {
       {CTPPSPixelDetId(0, 0, 3), 0},
@@ -298,7 +283,7 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
               std::string romanPotFolderName = Form("Arm%i/st%i/rp%i", arm, station, rp);
               ibooker.setCurrentFolder(romanPotFolderName);
               CTPPSPixelDetId rpId(arm, station, rp);
-              double binSize = setGlobalBinSizes(rpId);
+              setGlobalBinSizes(rpId);
               detectorIdsSet_.insert(rpId);
               h2TrackHitDistribution_[rpId] = ibooker.book2DD(
                   Form("h2TrackHitDistribution_arm%i_st%i_rp%i", arm, station, rp),
@@ -342,8 +327,7 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
                     100, 0, 5);
                 for (int nPlanes = 3; nPlanes <= 6; nPlanes++) {
                   for (int numberOfCls = 0; numberOfCls <= nPlanes; numberOfCls++) {
-                    // std::cout << "Creating hist " << nPlanes << " " << numberOfCls <<
-                    // "Arm " << arm << "Station " << station <<std::endl;
+                 
                     h1X0Sigma[rpId][std::pair(nPlanes, numberOfCls)] =
                         ibooker.book1DD(Form("h1X0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm,
                                       station, rp, nPlanes, numberOfCls),
@@ -410,7 +394,7 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
                       mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
                 }
               }
-              //SECOND
+             
               for(auto& plane: planeIds)
               {
                 rpId = CTPPSPixelDetId(arm, station, rp, plane);
@@ -481,35 +465,11 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
 }
 
 
-double EfficiencyTool_2018DQMWorker::setGlobalBinSizes(CTPPSPixelDetId& rpId)
+void EfficiencyTool_2018DQMWorker::setGlobalBinSizes(CTPPSPixelDetId& rpId)
 {
-  uint32_t station = rpId.station();
-  if (station == 2) {
-      mapXbins = mapXbins_st2;
-      mapXmin = mapXmin_st2;
-      mapXmax = mapXmax_st2;
-      mapYbins = mapYbins_st2;
-      mapYmin = mapYmin_st2;
-      mapYmax = mapYmax_st2;
-      fitXmin = fitXmin_st2;
-      fitXmax = fitXmax_st2;
-    } else {
-      mapXbins = mapXbins_st0;
-      mapXmin = mapXmin_st0;
-      mapXmax = mapXmax_st0;
-      mapYbins = mapYbins_st0;
-      mapYmin = mapYmin_st0;
-      mapYmax = mapYmax_st0;
-      fitXmin = fitXmin_st0;
-      fitXmax = fitXmax_st0;
-    }
-
-    // Shift Xmin and Xmax to align bins with sensor edge
-
     double binSize = (mapXmax - mapXmin) / mapXbins;
     mapXmin += binAlignmentParameters[rpId] * binSize / 150.;
     mapXmax += binAlignmentParameters[rpId] * binSize / 150.;
-    return binSize;
 }
 
 void EfficiencyTool_2018DQMWorker::dqmBeginRun(edm::Run const &, edm::EventSetup const &)
