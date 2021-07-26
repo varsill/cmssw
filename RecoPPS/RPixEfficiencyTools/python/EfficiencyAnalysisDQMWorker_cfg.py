@@ -133,7 +133,7 @@ elif runNumber > lastRunOfTheYear:
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load("DQM.Integration.config.environment_cfi")
-
+process.load("Geometry.VeryForwardGeometry.geometryRPFromDD_2018_cfi")
 
 #SETUP LOGGER
 process.MessageLogger = cms.Service("MessageLogger",
@@ -193,7 +193,9 @@ process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
     fiducialYLow=cms.untracked.vdouble(fiducialYLow),
     fiducialYHigh=cms.untracked.vdouble(fiducialYHigh),
     producerTag=cms.untracked.string("ReMiniAOD"),
-    customParameterTest=cms.string("my custom parameter value")
+    detectorTiltAngle=cms.untracked.double(18.4),
+    detectorRotationAngle=cms.untracked.double(-8)
+
 )
 
 

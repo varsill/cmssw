@@ -35,6 +35,12 @@
 #include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSPixelLocalTrack.h"
 
+
+
+#include "Geometry/VeryForwardGeometryBuilder/interface/CTPPSGeometry.h"
+#include "Geometry/Records/interface/VeryForwardRealGeometryRecord.h"
+
+
 #include <string>
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
@@ -82,7 +88,7 @@ private:
   float efficiencyPartialDerivativewrtPlane(
       uint32_t plane, const std::vector<uint32_t> &inputPlaneList,
       int numberToExtract, const std::map<unsigned, float> &planeEfficiency);
-      
+
   // Return true if a track should be discarded
   bool Cut(CTPPSPixelLocalTrack track, int arm, int station);
   void setGlobalBinSizes(CTPPSPixelDetId& rpId);
@@ -97,6 +103,8 @@ private:
   edm::EDGetTokenT<edm::DetSetVector<CTPPSPixelLocalTrack>>
       pixelLocalTrackToken_;
   edm::EDGetTokenT<edm::DetSetVector<CTPPSPixelRecHit>> pixelRecHitToken_;
+  edm::ESGetToken<CTPPSGeometry, VeryForwardRealGeometryRecord> geomEsToken_;
+
 
   bool isCorrelationPlotEnabled;
   bool supplementaryPlots;
@@ -157,14 +165,15 @@ private:
   std::vector<CTPPSPixelDetId> romanPotIdVector_;
 
   std::vector<uint32_t> listOfPlanes_ = {0, 1, 2, 3, 4, 5};
+  
+  double detectorTiltAngle;
+  double detectorRotationAngle;
+
   int binGroupingX = 1;
   int binGroupingY = 1;
-
-
-
   int mapXbins = 200 / binGroupingX;
-  float mapXmin = 0. * TMath::Cos(angle / 180. * TMath::Pi());
-  float mapXmax = 30. * TMath::Cos(angle / 180. * TMath::Pi()); //18.4 is default angle
+  float mapXmin;
+  float mapXmax;
   int mapYbins = 240 / binGroupingY;
   float mapYmin = -16.;
   float mapYmax = 8.;
@@ -187,14 +196,14 @@ private:
   std::map<std::pair<int, int>, double> fiducialYHigh_;
 };
 
-EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterSet &iConfig) {
+EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterSet &iConfig): geomEsToken_(esConsumes<edm::Transition::BeginRun>()) {
 
   producerTag = iConfig.getUntrackedParameter<std::string>("producerTag");
 
   pixelLocalTrackToken_ = consumes<edm::DetSetVector<CTPPSPixelLocalTrack>>(
       edm::InputTag("ctppsPixelLocalTracks", "",producerTag));
   pixelRecHitToken_ = consumes<edm::DetSetVector<CTPPSPixelRecHit>>(
-      edm::InputTag("ctppsPixelRecHits", "",producerTag));
+      edm::InputTag("ctppsPixelRecHits", "", producerTag));
   minNumberOfPlanesForEfficiency_ =
       iConfig.getParameter<int>("minNumberOfPlanesForEfficiency");
   minNumberOfPlanesForTrack_ =
@@ -236,7 +245,13 @@ EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterS
       {std::pair<int, int>(1, 0), fiducialYHighVector_.at(2)},
       {std::pair<int, int>(1, 2), fiducialYHighVector_.at(3)},
   };
+  detectorTiltAngle = iConfig.getUntrackedParameter<double>("detectorTiltAngle");
+  mapXmin = 0. * TMath::Cos(detectorTiltAngle / 180. * TMath::Pi());
+  mapXmax = 30. * TMath::Cos(detectorTiltAngle / 180. * TMath::Pi()); //18.4 is default angle
+  detectorRotationAngle = iConfig.getUntrackedParameter<double>("detectorRotationAngle");
   initialize();
+
+  
 }
 
   const std::vector<uint32_t> EfficiencyTool_2018DQMWorker::romanPotIds = {3};
@@ -274,193 +289,196 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
       h1BunchCrossing_ = ibooker.book1DD("h1BunchCrossing", "h1BunchCrossing", totalNumberOfBunches_, 0., totalNumberOfBunches_);
       h1CrossingAngle_ = ibooker.book1DD("h1CrossingAngle", "h1CrossingAngle", 70, 100., 170);
       
-      for(auto& arm: armIds)
-      {
-        for(auto& station: stationIds)
-        {
-          for(auto& rp: romanPotIds)
-          {
-              std::string romanPotFolderName = Form("Arm%i/st%i/rp%i", arm, station, rp);
-              ibooker.setCurrentFolder(romanPotFolderName);
-              CTPPSPixelDetId rpId(arm, station, rp);
-              setGlobalBinSizes(rpId);
-              detectorIdsSet_.insert(rpId);
-              h2TrackHitDistribution_[rpId] = ibooker.book2DD(
-                  Form("h2TrackHitDistribution_arm%i_st%i_rp%i", arm, station, rp),
-                  Form("h2TrackHitDistribution_arm%i_st%i_rp%i;x (mm);y (mm)", arm,
-                      station, rp),
-                  mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-              h23PointsTrackHitDistribution_[rpId] = ibooker.book2DD(
-                  Form("h23PointsTrackHitDistribution_arm%i_st%i_rp%i", arm, station,
-                      rp),
-                  Form("h23PointsTrackHitDistribution_arm%i_st%i_rp%i;x (mm);y (mm)",
-                      arm, station, rp),
-                  mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-              h2TrackEfficiencyMap_[rpId] = ibooker.book2DD(
-                  Form("h2TrackEfficiencyMap_arm%i_st%i_rp%i", arm, station, rp),
-                  Form("h2TrackEfficiencyMap_arm%i_st%i_rp%i; x (mm); y (mm)", arm,
-                      station, rp),
-                  mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-              h2TrackEfficiencyErrorMap_[rpId] = ibooker.book2DD(
-                  Form("h2TrackEfficiencyErrorMap_arm%i_st%i_rp%i", arm, station, rp),
-                  Form("h2TrackEfficiencyErrorMap_arm%i_st%i_rp%i; x (mm); y (mm)", arm,
-                      station, rp),
-                  mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-              h1NumberOfTracks_[rpId] = ibooker.book1DD(
-                  Form("h1NumberOfTracks_arm%i_st%i_rp%i", arm, station, rp),
-                  Form("h1NumberOfTracks_arm%i_st%i_rp%i; Tracks;", arm, station, rp),
-                  16, -0.5, 15.5);
-              if (supplementaryPlots) {
-                h2AvgPlanesUsed_[rpId] =
-                    ibooker.book2DD(Form("h2AvgPlanesUsed_arm%i_st%i_rp%i", arm, station, rp),
-                            Form("h2AvgPlanesUsed_arm%i_st%i_rp%i; x (mm); y (mm)",
-                                  arm, station, rp),
-                            mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                h1PlanesUsed_[rpId] = ibooker.book1DD(
-                    Form("h1PlanesUsed_arm%i_st%i_rp%i", arm, station, rp),
-                    Form("h1PlanesUsed_arm%i_st%i_rp%i; Planes", arm, station, rp), 7,
-                    -0.5, 6.5);
-                h1ChiSquaredOverNDF_[rpId] = ibooker.book1DD(
-                    Form("h1ChiSquaredOverNDF_arm%i_st%i_rp%i", arm, station, rp),
-                    Form("h1ChiSquaredOverNDF_arm%i_st%i_rp%i; Planes", arm, station,
-                        rp),
-                    100, 0, 5);
-                for (int nPlanes = 3; nPlanes <= 6; nPlanes++) {
-                  for (int numberOfCls = 0; numberOfCls <= nPlanes; numberOfCls++) {
-                 
-                    h1X0Sigma[rpId][std::pair(nPlanes, numberOfCls)] =
-                        ibooker.book1DD(Form("h1X0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm,
-                                      station, rp, nPlanes, numberOfCls),
-                                Form("h1X0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; "
-                                      "#sigma_{x} (mm);",
-                                      arm, station, rp, nPlanes, numberOfCls),
-                                100, 0, 0.1);
-                    h1Y0Sigma[rpId][std::pair(nPlanes, numberOfCls)] =
-                        ibooker.book1DD(Form("h1Y0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm,
-                                      station, rp, nPlanes, numberOfCls),
-                                Form("h1Y0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; "
-                                      "#sigma_{y} (mm);",
-                                      arm, station, rp, nPlanes, numberOfCls),
-                                100, 0, 0.1);
-                    h1TxSigma[rpId][std::pair(nPlanes, numberOfCls)] = ibooker.book1DD(
-                        Form("h1TxSigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm, station,
-                            rp, nPlanes, numberOfCls),
-                        Form("h1TxSigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; #sigma_{Tx};",
-                            arm, station, rp, nPlanes, numberOfCls),
-                        100, 0, 0.02);
-                    h1TySigma[rpId][std::pair(nPlanes, numberOfCls)] = ibooker.book1DD(
-                        Form("h1TySigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm, station,
-                            rp, nPlanes, numberOfCls),
-                        Form("h1TySigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; #sigma_{Ty};",
-                            arm, station, rp, nPlanes, numberOfCls),
-                        100, 0, 0.02);
-                  }
-                }
-                h1ConsecutivePlanes_[rpId] = ibooker.book1DD(
-                    Form("h1ConsecutivePlanes_arm%i_st%i_rp%i", arm, station, rp),
-                    Form("h1ConsecutivePlanes_arm%i_st%i_rp%i; #sigma_{Ty};", arm,
-                        station, rp),
-                    2, 0, 2);
-                h1ConsecutivePlanes_[rpId]->getTH1D()->GetXaxis()->SetBinLabel(1,
-                                                                    "Non-consecutive");
-                h1ConsecutivePlanes_[rpId]->getTH1D()->GetXaxis()->SetBinLabel(2, "Consecutive");
-              }
-              if (station == 0) {
-                h2TrackEfficiencyMap_rotated[rpId] = ibooker.book2DD(
-                    Form("h2TrackEfficiencyMap_rotated_arm%i_st%i_rp%i", arm, station,
-                        rp),
-                    Form("h2TrackEfficiencyMap_rotated_arm%i_st%i_rp%i; x (mm); y (mm)",
-                        arm, station, rp),
-                    mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                h2TrackEfficiencyErrorMap_rotated[rpId] =
-                    ibooker.book2DD(Form("h2TrackEfficiencyErrorMap_rotated_arm%i_st%i_rp%i",
-                                  arm, station, rp),
-                            Form("h2TrackEfficiencyErrorMap_rotated_arm%i_st%i_rp%i; "
-                                  "x (mm); y (mm)",
-                                  arm, station, rp),
-                            mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                if (supplementaryPlots) {
-                  h2TrackHitDistribution_rotated[rpId] =
-                      ibooker.book2DD(Form("h2TrackHitDistribution_rotated_arm%i_st%i_rp%i",
-                                    arm, station, rp),
-                              Form("h2TrackHitDistribution_rotated_arm%i_st%i_rp%i;x "
-                                    "(mm);y (mm)",
-                                    arm, station, rp),
-                              mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                  h2AvgPlanesUsed_rotated[rpId] = ibooker.book2DD(
-                      Form("h2AvgPlanesUsed_rotated_arm%i_st%i_rp%i", arm, station, rp),
-                      Form("h2AvgPlanesUsed_rotated_arm%i_st%i_rp%i; x (mm); y (mm)",
-                          arm, station, rp),
+      
+      const auto& geom = eventSetup.getData(geomEsToken_);
+      for (auto it = geom.beginSensor(); it != geom.endSensor(); ++it) {
+        if (!CTPPSPixelDetId::check(it->first))
+          continue;
+        const CTPPSPixelDetId detId(it->first);
+        uint32_t arm = detId.arm();
+        uint32_t rp = detId.rp();
+        uint32_t station = detId.station();
+        uint32_t plane = detId.plane();
+       
+        std::string romanPotFolderName = Form("Arm%i/st%i/rp%i", arm, station, rp);
+        ibooker.setCurrentFolder(romanPotFolderName);
+        CTPPSPixelDetId rpId(arm, station, rp);
+        setGlobalBinSizes(rpId);
+        detectorIdsSet_.insert(rpId);
+        h2TrackHitDistribution_[rpId] = ibooker.book2DD(
+            Form("h2TrackHitDistribution_arm%i_st%i_rp%i", arm, station, rp),
+            Form("h2TrackHitDistribution_arm%i_st%i_rp%i;x (mm);y (mm)", arm,
+                station, rp),
+            mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+        h23PointsTrackHitDistribution_[rpId] = ibooker.book2DD(
+            Form("h23PointsTrackHitDistribution_arm%i_st%i_rp%i", arm, station,
+                rp),
+            Form("h23PointsTrackHitDistribution_arm%i_st%i_rp%i;x (mm);y (mm)",
+                arm, station, rp),
+            mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+        h2TrackEfficiencyMap_[rpId] = ibooker.book2DD(
+            Form("h2TrackEfficiencyMap_arm%i_st%i_rp%i", arm, station, rp),
+            Form("h2TrackEfficiencyMap_arm%i_st%i_rp%i; x (mm); y (mm)", arm,
+                station, rp),
+            mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+        h2TrackEfficiencyErrorMap_[rpId] = ibooker.book2DD(
+            Form("h2TrackEfficiencyErrorMap_arm%i_st%i_rp%i", arm, station, rp),
+            Form("h2TrackEfficiencyErrorMap_arm%i_st%i_rp%i; x (mm); y (mm)", arm,
+                station, rp),
+            mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+        h1NumberOfTracks_[rpId] = ibooker.book1DD(
+            Form("h1NumberOfTracks_arm%i_st%i_rp%i", arm, station, rp),
+            Form("h1NumberOfTracks_arm%i_st%i_rp%i; Tracks;", arm, station, rp),
+            16, -0.5, 15.5);
+        if (supplementaryPlots) {
+          h2AvgPlanesUsed_[rpId] =
+              ibooker.book2DD(Form("h2AvgPlanesUsed_arm%i_st%i_rp%i", arm, station, rp),
+                      Form("h2AvgPlanesUsed_arm%i_st%i_rp%i; x (mm); y (mm)",
+                            arm, station, rp),
                       mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                }
-              }
-             
-              for(auto& plane: planeIds)
-              {
-                rpId = CTPPSPixelDetId(arm, station, rp, plane);
-                
-                h2ModuleHitMap_[rpId] = ibooker.book2DD(
-                    Form("h2ModuleHitMap_arm%i_st%i_rp%i_pl%i", arm, station, rp,
-                        plane),
-                    Form("h2ModuleHitMap_arm%i_st%i_rp%i_pl%i; x (mm); y (mm)", arm,
-                        station, rp, plane),
-                    mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                h2EfficiencyMap_[rpId] = ibooker.book2DD(
-                    Form("h2EfficiencyMap_arm%i_st%i_rp%i_pl%i", arm, station, rp,
-                        plane),
-                    Form("h2EfficiencyMap_arm%i_st%i_rp%i_pl%i; x (mm); y (mm)", arm,
-                        station, rp, plane),
-                    mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                h2AuxEfficiencyMap_[rpId] =
-                    ibooker.book2DD(Form("h2AuxEfficiencyMap_arm%i_st%i_rp%i_pl%i", arm,
-                                  station, rp, plane),
-                            Form("h2AuxEfficiencyMap_arm%i_st%i_rp%i_pl%i", arm,
-                                  station, rp, plane),
-                            mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                h2EfficiencyNormalizationMap_[rpId] =
-                    ibooker.book2DD(Form("h2EfficiencyNormalizationMap_arm%i_st%i_rp%i_pl%i",
-                                  arm, station, rp, plane),
-                            Form("h2EfficiencyNormalizationMap_arm%i_st%i_rp%i_pl%i",
-                                  arm, station, rp, plane),
-                            mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                if (station == 0) {
-                  h2EfficiencyMap_rotated[rpId] = ibooker.book2DD(
-                      Form("h2EfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i", arm,
-                          station, rp, plane),
-                      Form("h2EfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i; x (mm); y "
-                          "(mm)",
-                          arm, station, rp, plane),
-                      mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                  h2AuxEfficiencyMap_rotated[rpId] = ibooker.book2DD(
-                      Form("h2AuxEfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i", arm,
-                          station, rp, plane),
-                      Form("h2AuxEfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i", arm,
-                          station, rp, plane),
-                      mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                  h2EfficiencyNormalizationMap_rotated[rpId] = ibooker.book2DD(
-                      Form(
-                          "h2EfficiencyNormalizationMap_rotated_arm%i_st%i_rp%i_pl%i",
-                          arm, station, rp, plane),
-                      Form(
-                          "h2EfficiencyNormalizationMap_rotated_arm%i_st%i_rp%i_pl%i",
-                          arm, station, rp, plane),
-                      mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-
-                  if (supplementaryPlots) {
-                    h2ModuleHitMap_rotated[rpId] = ibooker.book2DD(
-                        Form("h2ModuleHitMap_rotated_arm%i_st%i_rp%i_pl%i", arm,
-                            station, rp, plane),
-                        Form("h2ModuleHitMap_rotated_arm%i_st%i_rp%i_pl%i; x (mm); y "
-                            "(mm)",
-                            arm, station, rp, plane),
-                        mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-                  }
-                }
-
+          h1PlanesUsed_[rpId] = ibooker.book1DD(
+              Form("h1PlanesUsed_arm%i_st%i_rp%i", arm, station, rp),
+              Form("h1PlanesUsed_arm%i_st%i_rp%i; Planes", arm, station, rp), 7,
+              -0.5, 6.5);
+          h1ChiSquaredOverNDF_[rpId] = ibooker.book1DD(
+              Form("h1ChiSquaredOverNDF_arm%i_st%i_rp%i", arm, station, rp),
+              Form("h1ChiSquaredOverNDF_arm%i_st%i_rp%i; Planes", arm, station,
+                  rp),
+              100, 0, 5);
+          for (int nPlanes = 3; nPlanes <= 6; nPlanes++) {
+            for (int numberOfCls = 0; numberOfCls <= nPlanes; numberOfCls++) {
+            
+              h1X0Sigma[rpId][std::pair(nPlanes, numberOfCls)] =
+                  ibooker.book1DD(Form("h1X0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm,
+                                station, rp, nPlanes, numberOfCls),
+                          Form("h1X0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; "
+                                "#sigma_{x} (mm);",
+                                arm, station, rp, nPlanes, numberOfCls),
+                          100, 0, 0.1);
+              h1Y0Sigma[rpId][std::pair(nPlanes, numberOfCls)] =
+                  ibooker.book1DD(Form("h1Y0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm,
+                                station, rp, nPlanes, numberOfCls),
+                          Form("h1Y0Sigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; "
+                                "#sigma_{y} (mm);",
+                                arm, station, rp, nPlanes, numberOfCls),
+                          100, 0, 0.1);
+              h1TxSigma[rpId][std::pair(nPlanes, numberOfCls)] = ibooker.book1DD(
+                  Form("h1TxSigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm, station,
+                      rp, nPlanes, numberOfCls),
+                  Form("h1TxSigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; #sigma_{Tx};",
+                      arm, station, rp, nPlanes, numberOfCls),
+                  100, 0, 0.02);
+              h1TySigma[rpId][std::pair(nPlanes, numberOfCls)] = ibooker.book1DD(
+                  Form("h1TySigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i", arm, station,
+                      rp, nPlanes, numberOfCls),
+                  Form("h1TySigma_arm%i_st%i_rp%i_nPlanes%i_nCls%i; #sigma_{Ty};",
+                      arm, station, rp, nPlanes, numberOfCls),
+                  100, 0, 0.02);
             }
           }
+          h1ConsecutivePlanes_[rpId] = ibooker.book1DD(
+              Form("h1ConsecutivePlanes_arm%i_st%i_rp%i", arm, station, rp),
+              Form("h1ConsecutivePlanes_arm%i_st%i_rp%i; #sigma_{Ty};", arm,
+                  station, rp),
+              2, 0, 2);
+          h1ConsecutivePlanes_[rpId]->getTH1D()->GetXaxis()->SetBinLabel(1,
+                                                              "Non-consecutive");
+          h1ConsecutivePlanes_[rpId]->getTH1D()->GetXaxis()->SetBinLabel(2, "Consecutive");
         }
+        if (station == 0) {
+          h2TrackEfficiencyMap_rotated[rpId] = ibooker.book2DD(
+              Form("h2TrackEfficiencyMap_rotated_arm%i_st%i_rp%i", arm, station,
+                  rp),
+              Form("h2TrackEfficiencyMap_rotated_arm%i_st%i_rp%i; x (mm); y (mm)",
+                  arm, station, rp),
+              mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+          h2TrackEfficiencyErrorMap_rotated[rpId] =
+              ibooker.book2DD(Form("h2TrackEfficiencyErrorMap_rotated_arm%i_st%i_rp%i",
+                            arm, station, rp),
+                      Form("h2TrackEfficiencyErrorMap_rotated_arm%i_st%i_rp%i; "
+                            "x (mm); y (mm)",
+                            arm, station, rp),
+                      mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+          if (supplementaryPlots) {
+            h2TrackHitDistribution_rotated[rpId] =
+                ibooker.book2DD(Form("h2TrackHitDistribution_rotated_arm%i_st%i_rp%i",
+                              arm, station, rp),
+                        Form("h2TrackHitDistribution_rotated_arm%i_st%i_rp%i;x "
+                              "(mm);y (mm)",
+                              arm, station, rp),
+                        mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+            h2AvgPlanesUsed_rotated[rpId] = ibooker.book2DD(
+                Form("h2AvgPlanesUsed_rotated_arm%i_st%i_rp%i", arm, station, rp),
+                Form("h2AvgPlanesUsed_rotated_arm%i_st%i_rp%i; x (mm); y (mm)",
+                    arm, station, rp),
+                mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+          }
+        }
+        
+        
+        rpId = CTPPSPixelDetId(arm, station, rp, plane);
+        
+        h2ModuleHitMap_[rpId] = ibooker.book2DD(
+            Form("h2ModuleHitMap_arm%i_st%i_rp%i_pl%i", arm, station, rp,
+                plane),
+            Form("h2ModuleHitMap_arm%i_st%i_rp%i_pl%i; x (mm); y (mm)", arm,
+                station, rp, plane),
+            mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+        h2EfficiencyMap_[rpId] = ibooker.book2DD(
+            Form("h2EfficiencyMap_arm%i_st%i_rp%i_pl%i", arm, station, rp,
+                plane),
+            Form("h2EfficiencyMap_arm%i_st%i_rp%i_pl%i; x (mm); y (mm)", arm,
+                station, rp, plane),
+            mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+        h2AuxEfficiencyMap_[rpId] =
+            ibooker.book2DD(Form("h2AuxEfficiencyMap_arm%i_st%i_rp%i_pl%i", arm,
+                          station, rp, plane),
+                    Form("h2AuxEfficiencyMap_arm%i_st%i_rp%i_pl%i", arm,
+                          station, rp, plane),
+                    mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+        h2EfficiencyNormalizationMap_[rpId] =
+            ibooker.book2DD(Form("h2EfficiencyNormalizationMap_arm%i_st%i_rp%i_pl%i",
+                          arm, station, rp, plane),
+                    Form("h2EfficiencyNormalizationMap_arm%i_st%i_rp%i_pl%i",
+                          arm, station, rp, plane),
+                    mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+        if (station == 0) {
+          h2EfficiencyMap_rotated[rpId] = ibooker.book2DD(
+              Form("h2EfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i", arm,
+                  station, rp, plane),
+              Form("h2EfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i; x (mm); y "
+                  "(mm)",
+                  arm, station, rp, plane),
+              mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+          h2AuxEfficiencyMap_rotated[rpId] = ibooker.book2DD(
+              Form("h2AuxEfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i", arm,
+                  station, rp, plane),
+              Form("h2AuxEfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i", arm,
+                  station, rp, plane),
+              mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+          h2EfficiencyNormalizationMap_rotated[rpId] = ibooker.book2DD(
+              Form(
+                  "h2EfficiencyNormalizationMap_rotated_arm%i_st%i_rp%i_pl%i",
+                  arm, station, rp, plane),
+              Form(
+                  "h2EfficiencyNormalizationMap_rotated_arm%i_st%i_rp%i_pl%i",
+                  arm, station, rp, plane),
+              mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+
+          if (supplementaryPlots) {
+            h2ModuleHitMap_rotated[rpId] = ibooker.book2DD(
+                Form("h2ModuleHitMap_rotated_arm%i_st%i_rp%i_pl%i", arm,
+                    station, rp, plane),
+                Form("h2ModuleHitMap_rotated_arm%i_st%i_rp%i_pl%i; x (mm); y "
+                    "(mm)",
+                    arm, station, rp, plane),
+                mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+          }
+        }
+        
+
       }
+      
       ibooker.cd();
 }
 
@@ -528,11 +546,11 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
       float pixelY0_rotated = 0;
       if (station == 0) {
         pixelX0_rotated =
-            pixeltrack.x0() * TMath::Cos((-8. / 180.) * TMath::Pi()) -
-            pixeltrack.y0() * TMath::Sin((-8. / 180.) * TMath::Pi());
+            pixeltrack.x0() * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi()) -
+            pixeltrack.y0() * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi());
         pixelY0_rotated =
-            pixeltrack.x0() * TMath::Sin((-8. / 180.) * TMath::Pi()) +
-            pixeltrack.y0() * TMath::Cos((-8. / 180.) * TMath::Pi());
+            pixeltrack.x0() * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi()) +
+            pixeltrack.y0() * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi());
       }
 
       int numberOfFittedPoints = 0;
@@ -567,10 +585,10 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
             double hitX0_rotated = 0;
             double hitY0_rotated = 0;
             if (station == 0) {
-              hitX0_rotated = hitX0 * TMath::Cos((-8. / 180.) * TMath::Pi()) -
-                              hitY0 * TMath::Sin((-8. / 180.) * TMath::Pi());
-              hitY0_rotated = hitX0 * TMath::Sin((-8. / 180.) * TMath::Pi()) +
-                              hitY0 * TMath::Cos((-8. / 180.) * TMath::Pi());
+              hitX0_rotated = hitX0 * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi()) -
+                              hitY0 * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi());
+              hitY0_rotated = hitX0 * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi()) +
+                              hitY0 * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi());
             }
             h2ModuleHitMap_[planeId]->Fill(hitX0, hitY0);
 
@@ -662,10 +680,10 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
         float hitX0_rotated = 0;
         float hitY0_rotated = 0;
         if (station == 0) {
-          hitX0_rotated = hitX0 * TMath::Cos((-8. / 180.) * TMath::Pi()) -
-                          hitY0 * TMath::Sin((-8. / 180.) * TMath::Pi());
-          hitY0_rotated = hitX0 * TMath::Sin((-8. / 180.) * TMath::Pi()) +
-                          hitY0 * TMath::Cos((-8. / 180.) * TMath::Pi());
+          hitX0_rotated = hitX0 * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi()) -
+                          hitY0 * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi());
+          hitY0_rotated = hitX0 * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi()) +
+                          hitY0 * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi());
         }
         if (numberOfPointPerPlaneEff[pln] >= minNumberOfPlanesForEfficiency_) {
           h2EfficiencyNormalizationMap_[planeId]->Fill(hitX0, hitY0);
@@ -881,10 +899,10 @@ bool EfficiencyTool_2018DQMWorker::Cut(CTPPSPixelLocalTrack track, int arm,
   float pixelX0_rotated = 0;
   float pixelY0_rotated = 0;
   if (station == 0) {
-    pixelX0_rotated = x * TMath::Cos((-8. / 180.) * TMath::Pi()) -
-                      y * TMath::Sin((-8. / 180.) * TMath::Pi());
-    pixelY0_rotated = x * TMath::Sin((-8. / 180.) * TMath::Pi()) +
-                      y * TMath::Cos((-8. / 180.) * TMath::Pi());
+    pixelX0_rotated = x * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi()) -
+                      y * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi());
+    pixelY0_rotated = x * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi()) +
+                      y * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi());
     x = pixelX0_rotated;
     y = pixelY0_rotated;
   }

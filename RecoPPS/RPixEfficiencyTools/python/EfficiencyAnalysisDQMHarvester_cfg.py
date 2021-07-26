@@ -62,7 +62,7 @@ process.MessageLogger.statistics = cms.untracked.vstring()
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load("DQM.Integration.config.environment_cfi")
 process.load("DQMServices.Components.DQMEnvironment_cfi")
-
+process.load("Geometry.VeryForwardGeometry.geometryRPFromDD_2018_cfi")
 
 #SETUP GLOBAL TAG
 process.GlobalTag = GlobalTag(process.GlobalTag, '113X_dataRun2_v6')
@@ -74,7 +74,9 @@ process.source = cms.Source("DQMRootSource",
 )
 
 #SETUP HARVESTER
-process.harvester = DQMEDHarvester('EfficiencyTool_2018DQMHarvester')
+process.harvester = DQMEDHarvester('EfficiencyTool_2018DQMHarvester',
+    
+)
 
 
 #CONFIGURE DQM Saver
