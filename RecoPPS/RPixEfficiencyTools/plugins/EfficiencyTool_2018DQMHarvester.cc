@@ -35,22 +35,8 @@
 #include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSPixelLocalTrack.h"
 
-
-
-
-
 #include "Geometry/VeryForwardGeometryBuilder/interface/CTPPSGeometry.h"
 #include "Geometry/Records/interface/VeryForwardRealGeometryRecord.h"
-
-
-
-
-
-
-
-
-
-
 
 #include <string>
 #include <algorithm>
@@ -66,41 +52,39 @@ public:
   explicit EfficiencyTool_2018DQMHarvester(const edm::ParameterSet &);
   ~EfficiencyTool_2018DQMHarvester();
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
-  void beginRun(edm::Run const &run, edm::EventSetup const & eventSetup) override {
-    const auto& geom = eventSetup.getData(geomEsToken_);
-    for (auto it = geom.beginSensor(); it != geom.endSensor(); ++it) {
-      if (!CTPPSPixelDetId::check(it->first))
-        continue;
-      const CTPPSPixelDetId detid(it->first);
-      
-      detids_.emplace_back(detid);
-    }
-  };
+  void beginRun(edm::Run const &run, edm::EventSetup const & eventSetup) override;
 
 private:
-  static const std::vector<uint32_t> romanPotIds;
-  static const std::vector<uint32_t> armIds;
-  static const std::vector<uint32_t> stationIds;
-  static const std::vector<uint32_t> planeIds;
   edm::ESGetToken<CTPPSGeometry, VeryForwardRealGeometryRecord> geomEsToken_;
   std::vector<CTPPSPixelDetId> detids_;
 
 };
 
-  const std::vector<uint32_t> EfficiencyTool_2018DQMHarvester::romanPotIds = {3};
-  const std::vector<uint32_t> EfficiencyTool_2018DQMHarvester::armIds = {0, 1};
-  const std::vector<uint32_t> EfficiencyTool_2018DQMHarvester::stationIds = {0, 2};
-  const std::vector<uint32_t> EfficiencyTool_2018DQMHarvester::planeIds = {0, 1, 2, 3, 4, 5};
 
 EfficiencyTool_2018DQMHarvester::EfficiencyTool_2018DQMHarvester(const edm::ParameterSet &iConfig): 
-geomEsToken_(esConsumes<edm::Transition::BeginRun>()) {
-  
+  geomEsToken_(esConsumes<edm::Transition::BeginRun>()) {
 
 }
+
 
 EfficiencyTool_2018DQMHarvester::~EfficiencyTool_2018DQMHarvester() {
   
 }
+
+
+void EfficiencyTool_2018DQMHarvester::beginRun(edm::Run const &run, edm::EventSetup const & eventSetup){
+    if(detids_.size()==0){ //first run
+      const auto& geom = eventSetup.getData(geomEsToken_);
+      for (auto it = geom.beginSensor(); it != geom.endSensor(); ++it) {
+        if (!CTPPSPixelDetId::check(it->first))
+          continue;
+        const CTPPSPixelDetId detid(it->first);
+        
+        detids_.emplace_back(detid);
+    }
+  }
+}
+
 
 void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQMStore::IGetter & igetter){
   igetter.cd();

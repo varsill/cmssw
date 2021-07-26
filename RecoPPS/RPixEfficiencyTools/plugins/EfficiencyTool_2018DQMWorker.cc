@@ -47,7 +47,7 @@
 #include <exception>
 #include <fstream>
 #include <memory>
-#include<set>
+#include <set>
 
 
 class EfficiencyTool_2018DQMWorker: public DQMEDAnalyzer {
@@ -92,13 +92,6 @@ private:
   // Return true if a track should be discarded
   bool Cut(CTPPSPixelLocalTrack track, int arm, int station);
   void setGlobalBinSizes(CTPPSPixelDetId& rpId);
-
-
-  std::set<CTPPSPixelDetId> detectorIdsSet_;
-  static const std::vector<uint32_t> romanPotIds;
-  static const std::vector<uint32_t> armIds;
-  static const std::vector<uint32_t> stationIds;
-  static const std::vector<uint32_t> planeIds;
 
   edm::EDGetTokenT<edm::DetSetVector<CTPPSPixelLocalTrack>>
       pixelLocalTrackToken_;
@@ -164,8 +157,6 @@ private:
   std::vector<CTPPSPixelDetId> detectorIdVector_;
   std::vector<CTPPSPixelDetId> romanPotIdVector_;
 
-  std::vector<uint32_t> listOfPlanes_ = {0, 1, 2, 3, 4, 5};
-  
   double detectorTiltAngle;
   double detectorRotationAngle;
 
@@ -180,7 +171,7 @@ private:
   float fitXmin = 45.;
   float fitXmax = 58.;
 
-
+  std::vector<uint32_t> listOfPlanes_;
   std::map<CTPPSPixelDetId, int> binAlignmentParameters = {
       {CTPPSPixelDetId(0, 0, 3), 0},
       {CTPPSPixelDetId(0, 2, 3), 0},
@@ -254,31 +245,8 @@ EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterS
   
 }
 
-  const std::vector<uint32_t> EfficiencyTool_2018DQMWorker::romanPotIds = {3};
-  const std::vector<uint32_t> EfficiencyTool_2018DQMWorker::armIds = {0, 1};
-  const std::vector<uint32_t> EfficiencyTool_2018DQMWorker::stationIds = {0, 2};
-  const std::vector<uint32_t> EfficiencyTool_2018DQMWorker::planeIds = {0, 1, 2, 3, 4, 5};
-
-void EfficiencyTool_2018DQMWorker::printMeans()
-{
-  for(auto& arm: armIds)
-  {
-    for(auto& station: stationIds)
-    {
-      for(auto& rp: romanPotIds)
-      {
-          for(auto& plane: planeIds)
-          {
-            CTPPSPixelDetId detId(arm, station, rp, plane);
-            std::cout<<"WORKER: "<<h2AuxEfficiencyMap_[detId]->getMean(1)<<std::endl;
-          }
-      }
-    }
-  }
-}
 
 EfficiencyTool_2018DQMWorker::~EfficiencyTool_2018DQMWorker() {
-
 
 }
 
@@ -291,6 +259,9 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
       
       
       const auto& geom = eventSetup.getData(geomEsToken_);
+      
+      
+      std::set<uint32_t> planesSet;
       for (auto it = geom.beginSensor(); it != geom.endSensor(); ++it) {
         if (!CTPPSPixelDetId::check(it->first))
           continue;
@@ -299,12 +270,13 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
         uint32_t rp = detId.rp();
         uint32_t station = detId.station();
         uint32_t plane = detId.plane();
-       
+
+        planesSet.insert(plane);
+
         std::string romanPotFolderName = Form("Arm%i/st%i/rp%i", arm, station, rp);
         ibooker.setCurrentFolder(romanPotFolderName);
         CTPPSPixelDetId rpId(arm, station, rp);
         setGlobalBinSizes(rpId);
-        detectorIdsSet_.insert(rpId);
         h2TrackHitDistribution_[rpId] = ibooker.book2DD(
             Form("h2TrackHitDistribution_arm%i_st%i_rp%i", arm, station, rp),
             Form("h2TrackHitDistribution_arm%i_st%i_rp%i;x (mm);y (mm)", arm,
@@ -446,7 +418,7 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
           h2EfficiencyMap_rotated[rpId] = ibooker.book2DD(
               Form("h2EfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i", arm,
                   station, rp, plane),
-              Form("h2EfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i; x (mm); y "
+              Form("h2EfficiencyMap_rotated_arm%i_st%i_rp%i_pl%i; x (mm); y  "
                   "(mm)",
                   arm, station, rp, plane),
               mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
@@ -475,10 +447,10 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
                 mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
           }
         }
-        
 
       }
       
+      listOfPlanes_.assign(planesSet.begin(), planesSet.end());
       ibooker.cd();
 }
 
@@ -633,26 +605,6 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
         }
       }
       if (numberOfFittedPoints == 3) {
-
-        // For Run 324841, to estimate 3 planes tracks in the damaged region
-        // if(arm == 0 && station == 2){
-        // 	if(pixelX0 > 43.90 && pixelX0 < 45.48 && pixelY0 > 3.39 &&
-        // pixelY0 < 4.59)
-        // h23PointsTrackHitDistribution_[rpId]->Fill(pixelX0,pixelY0);
-        // }
-        // else if(arm == 0 && station == 0){
-        // 	if(pixelX0 > 6.18 && pixelX0 < 7.46 && pixelY0 > 4.36 && pixelY0
-        // < 5.19) h23PointsTrackHitDistribution_[rpId]->Fill(pixelX0,pixelY0);
-        // }
-        // else if(arm == 1 && station ==2){
-        // 	if(pixelX0 > 44.15 && pixelX0 < 45.29 && pixelY0 > 2.28 &&
-        // pixelY0 < 4.89)
-        // h23PointsTrackHitDistribution_[rpId]->Fill(pixelX0,pixelY0);
-        // }
-        // else if(arm == 1 && station == 0){
-        // 	if(pixelX0 > 5.31 && pixelX0 < 6.31 && pixelY0 > 3.7 && pixelY0
-        // < 5.40) h23PointsTrackHitDistribution_[rpId]->Fill(pixelX0,pixelY0);
-        // }
         h23PointsTrackHitDistribution_[rpId]->Fill(pixelX0, pixelY0);
       }
 
