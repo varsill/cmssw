@@ -67,11 +67,47 @@ geomEsToken_(esConsumes<edm::Transition::BeginRun>()) {
 
 }
 
+
+void ReferenceAnalysisDQMHarvester::beginRun(edm::Run const& run, edm::EventSetup const& eventSetup)
+{
+  if(detids_.size()==0){ //first run
+      const auto& geom = eventSetup.getData(geomEsToken_);
+      for (auto it = geom.beginSensor(); it != geom.endSensor(); ++it) {
+        if (!CTPPSPixelDetId::check(it->first))
+          continue;
+        const CTPPSPixelDetId detid(it->first);
+        
+        detids_.emplace_back(detid);
+    }
+  }
+}
 ReferenceAnalysisDQMHarvester::~ReferenceAnalysisDQMHarvester() {
   
 }
 
 void ReferenceAnalysisDQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQMStore::IGetter & igetter){
+  
+  for (auto &rpId : detids_) {
+    uint32_t arm = rpId.arm();
+    uint32_t station = rpId.station();
+    uint32_t rp = rpId.rp();
+    uint32_t plane 
+    std::string rpDirName = Form("Arm%i_st%i_rp3", arm, station);
+    ibooker->cd(rpDirName.data());
+    MonitorElement* h2RefinedTrackEfficiency = igettet.get("h2RefinedTrackEfficiency_arm%i_st%i_rp%i");
+    h2RefinedTrackEfficiency_->Divide(h2RefinedTrackEfficiency_[rpId],
+                                            h2TrackHitDistribution_[rpId]);
+    h2RefinedTrackEfficiency_->SetMaximum(1.);
+    if (station == 0) {
+      h2RefinedTrackEfficiency_rotated->Divide(
+          h2RefinedTrackEfficiency_rotated,
+          h2TrackHitDistribution_rotated);
+      h2RefinedTrackEfficiency_rotated->SetMaximum(1.);
+    }
+  }
+  outputFile_->Close();
+  delete outputFile_;
+
 
 }
 
