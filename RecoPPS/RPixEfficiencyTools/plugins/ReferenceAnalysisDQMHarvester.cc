@@ -52,8 +52,7 @@ public:
   explicit ReferenceAnalysisDQMHarvester(const edm::ParameterSet &);
   ~ReferenceAnalysisDQMHarvester();
   void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override;
-  void beginRun(edm::Run const &run, edm::EventSetup const & eventSetup) override {
-  };
+  void beginRun(edm::Run const &run, edm::EventSetup const & eventSetup) override;
 
 private:
   edm::ESGetToken<CTPPSGeometry, VeryForwardRealGeometryRecord> geomEsToken_;
@@ -87,26 +86,37 @@ ReferenceAnalysisDQMHarvester::~ReferenceAnalysisDQMHarvester() {
 
 void ReferenceAnalysisDQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQMStore::IGetter & igetter){
   
+  igetter.cd();
   for (auto &rpId : detids_) {
     uint32_t arm = rpId.arm();
     uint32_t station = rpId.station();
     uint32_t rp = rpId.rp();
-    uint32_t plane 
-    std::string rpDirName = Form("Arm%i_st%i_rp3", arm, station);
-    ibooker->cd(rpDirName.data());
-    MonitorElement* h2RefinedTrackEfficiency = igettet.get("h2RefinedTrackEfficiency_arm%i_st%i_rp%i");
-    h2RefinedTrackEfficiency_->Divide(h2RefinedTrackEfficiency_[rpId],
-                                            h2TrackHitDistribution_[rpId]);
-    h2RefinedTrackEfficiency_->SetMaximum(1.);
+    uint32_t plane = rpId.plane();
+    std::string rpDirName = Form("Arm%i_st%i_rp%i", arm, station, rp);
+    ibooker.cd(rpDirName.data());
+
+    std::string numMonitorName_ = Form("h2RefinedTrackEfficiencyBuffer_arm%i_st%i_rp%i", arm, station, rp);
+    std::string denMonitorName_ = Form("h2TrackHitDistribution_arm%i_st%i_rp%i", arm, station, rp);
+    std::string resultName_ = Form("h2RefinedTrackEfficiency_arm%i_st%i_rp%i", arm, station, rp);
+
+    MonitorElement *numerator = igetter.get(numMonitorName_);
+    MonitorElement *denominator = igetter.get(denMonitorName_);
+    MonitorElement *result = igetter.get(resultName_);
+
+    result->divide(numerator, denominator, 1., 1., "B");
+    result->getTH2D()->SetMaximum(1.);
     if (station == 0) {
-      h2RefinedTrackEfficiency_rotated->Divide(
-          h2RefinedTrackEfficiency_rotated,
-          h2TrackHitDistribution_rotated);
-      h2RefinedTrackEfficiency_rotated->SetMaximum(1.);
+      std::string numMonitorName_ = Form("h2RefinedTrackEfficiencyBuffer_rotated_arm%i_st%i_rp%i", arm, station, rp);
+      std::string denMonitorName_ = Form("h2TrackHitDistribution_rotated_arm%i_st%i_rp%i", arm, station, rp);
+      std::string resultName_ = Form("h2RefinedTrackEfficiency_rotated_arm%i_st%i_rp%i", arm, station, rp);
+
+      MonitorElement *numerator = igetter.get(numMonitorName_);
+      MonitorElement *denominator = igetter.get(denMonitorName_);
+      MonitorElement *result = igetter.get(resultName_);
+      result->divide(numerator, denominator, 1., 1., "B");
+      result->getTH2D()->SetMaximum(1.);
     }
   }
-  outputFile_->Close();
-  delete outputFile_;
 
 
 }

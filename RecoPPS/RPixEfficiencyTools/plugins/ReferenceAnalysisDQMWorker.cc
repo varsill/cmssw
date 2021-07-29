@@ -123,7 +123,8 @@ private:
       {CTPPSPixelDetId(1, 2, 3), 0}};
 
   // output histograms
-  std::map<CTPPSPixelDetId, MonitorElement *> h2PlaneEfficiencyMap_;
+  std::map<CTPPSPixelDetId, TH2D *> h2PlaneEfficiencyMap_;
+  
   std::map<CTPPSPixelDetId, MonitorElement *> h2RefinedTrackEfficiency_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2TrackHitDistribution_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2RefinedTrackEfficiency_rotated;
@@ -191,6 +192,7 @@ ReferenceAnalysisDQMWorker::~ReferenceAnalysisDQMWorker() {
 
 void ReferenceAnalysisDQMWorker::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const & run, edm::EventSetup const & eventSetup)
 {
+  ibooker.cd();
   auto efficiencyFile_ = new TFile(efficiencyFileName_.data(), "READ");
   if (!efficiencyFile_->IsOpen()) {
     std::cout << "No efficiency file available!" << std::endl;
@@ -216,8 +218,7 @@ void ReferenceAnalysisDQMWorker::bookHistograms(DQMStore::IBooker& ibooker, edm:
               "h2EfficiencyMap_arm%i_st%i_rp%i_pl%i", arm, station, rp, arm, station, rp, plane);
     
     if (efficiencyFile_->Get(h2planeEfficiencyMapName.data())) {
-      h2PlaneEfficiencyMap_[detId] = ibooker.book2DD(h2planeEfficiencyMapName,
-          (TH2D *)efficiencyFile_->Get(h2planeEfficiencyMapName.data()));
+      h2PlaneEfficiencyMap_[detId] = (TH2D *)efficiencyFile_->Get(h2planeEfficiencyMapName.data());
     }
 
     if(plane==0){//to make sure that these trackHit historgrams will be booked just once
@@ -226,11 +227,20 @@ void ReferenceAnalysisDQMWorker::bookHistograms(DQMStore::IBooker& ibooker, edm:
           Form("h2TrackHitDistribution_arm%i_st%i_rp%i;x (mm);y (mm)", arm,
                 station, rp),
           mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
-      h2RefinedTrackEfficiency_[detId] = ibooker.book2DD(
+
+      ibooker.book2DD(
           Form("h2RefinedTrackEfficiency_arm%i_st%i_rp%i", arm, station, rp),
           Form("h2RefinedTrackEfficiency_arm%i_st%i_rp%i;x (mm);y (mm)", arm,
                 station, rp),
           mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+      
+      h2RefinedTrackEfficiency_[detId] = ibooker.book2DD(
+          Form("h2RefinedTrackEfficiencyBuffer_arm%i_st%i_rp%i", arm, station, rp),
+          Form("h2RefinedTrackEfficiencyBuffer_arm%i_st%i_rp%i;x (mm);y (mm)", arm,
+                station, rp),
+          mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+
+
       if (station == 0) {
         h2TrackHitDistribution_rotated[detId] = ibooker.book2DD(
             Form("h2TrackHitDistribution_rotated_arm%i_st%i_rp%i", arm, station,
@@ -238,8 +248,16 @@ void ReferenceAnalysisDQMWorker::bookHistograms(DQMStore::IBooker& ibooker, edm:
             Form("h2TrackHitDistribution_rotated_arm%i_st%i_rp%i;x (mm);y (mm)",
                   arm, station, rp),
             mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+        
         h2RefinedTrackEfficiency_rotated[detId] =
-            ibooker.book2DD(Form("h2RefinedTrackEfficiency_rotated_arm%i_st%i_rp%i",
+            ibooker.book2DD(Form("h2RefinedTrackEfficiencyBuffer_rotated_arm%i_st%i_rp%i",
+                          arm, station, rp),
+                      Form("h2RefinedTrackEfficiencyBuffer_rotated_arm%i_st%i_rp%i;x "
+                          "(mm);y (mm)",
+                          arm, station, rp),
+                      mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+
+        ibooker.book2DD(Form("h2RefinedTrackEfficiency_rotated_arm%i_st%i_rp%i",
                           arm, station, rp),
                       Form("h2RefinedTrackEfficiency_rotated_arm%i_st%i_rp%i;x "
                           "(mm);y (mm)",
@@ -259,6 +277,8 @@ void ReferenceAnalysisDQMWorker::dqmBeginRun(edm::Run const &, edm::EventSetup c
 {
   
 }
+
+
 void ReferenceAnalysisDQMWorker::analyze(const edm::Event &iEvent,
                                   const edm::EventSetup &iSetup) {
                                     using namespace edm;
@@ -312,11 +332,11 @@ void ReferenceAnalysisDQMWorker::analyze(const edm::Event &iEvent,
           double hitX0 = hit.globalCoordinates().x() + hit.xResidual();
           double hitY0 = hit.globalCoordinates().y() + hit.yResidual();
           uint32_t xBin =
-              h2PlaneEfficiencyMap_[planeId]->getTH2D()->GetXaxis()->FindBin(hitX0);
+              h2PlaneEfficiencyMap_[planeId]->GetXaxis()->FindBin(hitX0);
           uint32_t yBin =
-              h2PlaneEfficiencyMap_[planeId]->getTH2D()->GetYaxis()->FindBin(hitY0);
+              h2PlaneEfficiencyMap_[planeId]->GetYaxis()->FindBin(hitY0);
           planeEfficiency[plane] =
-              h2PlaneEfficiencyMap_[planeId]->getTH2D()->GetBinContent(xBin, yBin);
+              h2PlaneEfficiencyMap_[planeId]->GetBinContent(xBin, yBin);
           if (debug_)
             std::cout << "Hit coordinates: (" << hitX0 << "," << hitY0
                       << ")\n Hit bins (" << xBin << "." << yBin << ")"
