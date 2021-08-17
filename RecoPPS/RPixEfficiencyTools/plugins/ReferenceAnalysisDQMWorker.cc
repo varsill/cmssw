@@ -108,8 +108,8 @@ private:
   int binGroupingY = 1;
 
   int mapXbins = 200 / binGroupingX;
-  float mapXmin = 0. * TMath::Cos(18.4 / 180. * TMath::Pi());
-  float mapXmax = 30. * TMath::Cos(18.4 / 180. * TMath::Pi());
+  float mapXmin;
+  float mapXmax;
   int mapYbins = 240 / binGroupingY;
   float mapYmin = -16.;
   float mapYmax = 8.;
@@ -124,7 +124,7 @@ private:
 
   // output histograms
   std::map<CTPPSPixelDetId, TH2D *> h2PlaneEfficiencyMap_;
-  
+
   std::map<CTPPSPixelDetId, MonitorElement *> h2RefinedTrackEfficiency_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2TrackHitDistribution_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2RefinedTrackEfficiency_rotated;
@@ -139,6 +139,9 @@ private:
   std::map<std::pair<int, int>, double> fiducialXLow_;
   std::map<std::pair<int, int>, double> fiducialYLow_;
   std::map<std::pair<int, int>, double> fiducialYHigh_;
+
+  double detectorTiltAngle;
+  double detectorRotationAngle;
 };
 
 ReferenceAnalysisDQMWorker::ReferenceAnalysisDQMWorker(const edm::ParameterSet &iConfig): geomEsToken_(esConsumes<edm::Transition::BeginRun>()) {
@@ -182,6 +185,10 @@ ReferenceAnalysisDQMWorker::ReferenceAnalysisDQMWorker(const edm::ParameterSet &
       {std::pair<int, int>(1, 0), fiducialYHighVector_.at(2)},
       {std::pair<int, int>(1, 2), fiducialYHighVector_.at(3)},
   };
+  detectorTiltAngle = iConfig.getUntrackedParameter<double>("detectorTiltAngle");
+  mapXmin = 0. * TMath::Cos(detectorTiltAngle / 180. * TMath::Pi());
+  mapXmax = 30. * TMath::Cos(detectorTiltAngle / 180. * TMath::Pi());
+  detectorRotationAngle = iConfig.getUntrackedParameter<double>("detectorRotationAngle");
 }
 
 ReferenceAnalysisDQMWorker::~ReferenceAnalysisDQMWorker() {
@@ -311,11 +318,11 @@ void ReferenceAnalysisDQMWorker::analyze(const edm::Event &iEvent,
       float pixelY0_rotated = 0;
       if (station == 0) {
         pixelX0_rotated =
-            pixeltrack.x0() * TMath::Cos((-8. / 180.) * TMath::Pi()) -
-            pixeltrack.y0() * TMath::Sin((-8. / 180.) * TMath::Pi());
+            pixeltrack.x0() * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi()) -
+            pixeltrack.y0() * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi());
         pixelY0_rotated =
-            pixeltrack.x0() * TMath::Sin((-8. / 180.) * TMath::Pi()) +
-            pixeltrack.y0() * TMath::Cos((-8. / 180.) * TMath::Pi());
+            pixeltrack.x0() * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi()) +
+            pixeltrack.y0() * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi());
       }
 
       edm::DetSetVector<CTPPSPixelFittedRecHit> fittedHits =
@@ -381,10 +388,10 @@ bool ReferenceAnalysisDQMWorker::Cut(CTPPSPixelLocalTrack track, int arm,
   float pixelX0_rotated = 0;
   float pixelY0_rotated = 0;
   if (station == 0) {
-    pixelX0_rotated = x * TMath::Cos((-8. / 180.) * TMath::Pi()) -
-                      y * TMath::Sin((-8. / 180.) * TMath::Pi());
-    pixelY0_rotated = x * TMath::Sin((-8. / 180.) * TMath::Pi()) +
-                      y * TMath::Cos((-8. / 180.) * TMath::Pi());
+    pixelX0_rotated = x * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi()) -
+                      y * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi());
+    pixelY0_rotated = x * TMath::Sin((detectorRotationAngle / 180.) * TMath::Pi()) +
+                      y * TMath::Cos((detectorRotationAngle / 180.) * TMath::Pi());
     x = pixelX0_rotated;
     y = pixelY0_rotated;
   }

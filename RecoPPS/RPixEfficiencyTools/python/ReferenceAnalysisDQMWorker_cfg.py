@@ -153,7 +153,9 @@ process.worker = DQMEDAnalyzer('ReferenceAnalysisDQMWorker',
     fiducialXLow=cms.untracked.vdouble(fiducialXLow),
     fiducialYLow=cms.untracked.vdouble(fiducialYLow),
     fiducialYHigh=cms.untracked.vdouble(fiducialYHigh),
-    producerTag=cms.untracked.string("ReMiniAOD")
+    producerTag=cms.untracked.string("ReMiniAOD"),
+    detectorTiltAngle=cms.untracked.double(18.4),
+    detectorRotationAngle=cms.untracked.double(-8)
 )
 
 #SCHEDULE JOB
