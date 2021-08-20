@@ -1,21 +1,36 @@
-import controllers as ctrl
+import automation_control as ctrl
 import argparse
 import subprocess
 import enum 
+import inspect
 
 campaign='test_campaign2'
 workflow='test_workflow'
 dataset = "/Charmonium/Run2018B-12Nov2019_UL2018-v1/AOD"
 template = "CrabConfigTemplate.py"
 
+def define_enum(TaskStatusClass):
+    TaskStatusClass.__statuses__ = TaskStatusClass.__members__.keys()
+    return TaskStatusClass
 
-class TaskStatus(ctrl.TaskStatus, enum.Enum):
+def decorate(TaskStatusClass):
+    def wrapper(AdditionalClass):
+        for attr in AdditionalClass.__dict__:
+            if not attr.startswith("_"):
+                setattr(TaskStatusClass, attr, AdditionalClass.__dict__[attr])
+        
+        return TaskStatusClass
+    return wrapper
+
+
+@define_enum
+class TaskStatusEnum(enum.Enum):
     """
     Simple class to encode tasks statuses
     """
-
+    initialized = enum.auto(),
     duringFirstWorker = enum.auto(),
-    afterFirstWorker= enum.auto(),
+    waitingForFirstWorkerTransfer= enum.auto(),
     duringFirstHarvester = enum.auto()
     afterFirstHarvester = enum.auto(),
     duringSecondWorker = enum.auto(),
@@ -25,7 +40,10 @@ class TaskStatus(ctrl.TaskStatus, enum.Enum):
     done = enum.auto()
     
 
-
+@decorate(TaskStatusEnum)
+class TaskStatus:
+    pass
+    
 
 def get_tasks_numbers_list(tasks_list_path):
     with open(tasks_list_path) as tasks_list_path:
@@ -48,18 +66,7 @@ def get_runs_range(data_period):
     return '317080'
 
 
-def submit_task_to_crab(task_information):
-    result = subprocess.run(['python', 'CrabSubmitter.py', '--crabCmd', 'submit', '-d', dataset, 
-    '-r', get_runs_range(task_information['dataPeriod']),'-t', template, '-c', task_information['campaign'], 
-    '-w', task_information['workflow'], '--dataPeriod', task_information['dataPeriod']], stderr=subprocess.STDOUT)
-    return result
 
-def wait_for_crab_task_to_finish(task_information):
-    result = subprocess.run(['./automation_control/ecalautomation.py', '-c', task_information['campaign'], 
-    '-w', task_information['workflow'], '--dataPeriod', task_information['dataPeriod'], 'wait', 
-    "--resubcmd", "crab resubmit --proxy=/afs/cern.ch/user/e/ecalgit/grid_proxy.x509 crab_wdir", 
-    "--howManyAttempts", "1", "-s", "0" ], stderr=subprocess.STDOUT)
-    return result
 
 
 def process_new_tasks(tasks_list_path, task_controller):
@@ -92,71 +99,57 @@ def is_already_transfered(campaign, workflow, dataPeriod):
     except Exception:
         return False
     
+    
+def get_status(task_information, TaskStatusClass):
+    for member_name in TaskStatusClass.__members__.keys():
+        #if TaskStatusClass.__members__[member_name].__class__ != enum.auto:
+        #    continue
+        if task_information.get(member_name)==1:
+            
+            return member_name
+    raise Exception("Task is in neither of the states defined in TaskStatusClass")
 
 
+def submit_task_to_crab(campaign, workflow, data_period, dataset, template):
+    result = ctrl.submit_task_to_crab(campaign, workflow, data_period, get_runs_range(data_period), template, dataset)
+    return result
+
+
+transition_dict = {
+                        'initialized': (submit_task_to_crab, 0, TaskStatus.duringFirstWorker, [dataset, template] ),
+                        'duringFirstWorker': (ctrl.check_if_crab_task_is_finished, True, TaskStatus.waitingForFirstWorkerTransfer, []),
+                        'waitingForFirstWorkerTransfer': (is_already_transfered, True, TaskStatus.duringFirstHarvester, [])
+    
+                  } 
+
+
+
+def perform_action(task_information, task_controller, TaskStatusClass):   
+    func, expected_result, next_status, parms = transition_dict[get_status(task_information, TaskStatusClass)]
+    result = func(task_information['campaign'], task_information['workflow'], task_information['dataPeriod'], *parms)
+    if result==expected_result:
+       task_information=task_controller.setStatus(task_information['dataPeriod'], next_status)
+       return task_information
+    return None
+    
+    
+def process_tasks(opts, TaskStatusClass):
+    task_controller = ctrl.TaskCtrl.TaskControl(campaign=campaign, workflow=workflow, TaskStatusClass=TaskStatusClass)
+    process_new_tasks(opts.tasks_list_path, task_controller)
+    tasks_in_database_information_list = task_controller.getAllTasks().get_points()
+    for task_information in tasks_in_database_information_list:
+        print(task_information)
+        task_information_buffer = task_information
+        while task_information_buffer != None:
+            task_information_buffer  = perform_action(task_information_buffer, task_controller, TaskStatusClass=TaskStatusClass)
+    
     
 if __name__ == '__main__':
 
     parser = prepare_parser()
     opts = parser.parse_args()
     
-    task_controller = ctrl.TaskControl(campaign=campaign, workflow=workflow, TaskStatusClass=TaskStatus)
+    process_tasks(opts, TaskStatusClass=TaskStatus)
     
-    #PROCESS NEW TASKS FROM .txt file
-    process_new_tasks(opts.tasks_list_path, task_controller)
-    
-    #PROCESS TASKS WHICH ARE ALREADY IN DB
-    
-    tasks_in_database_information_list = task_controller.getAllTasks().get_points()
-    
-    for task_information in tasks_in_database_information_list:
-        
-        print(task_information)
-        
-        if task_information['initialized']==1:
-            result = submit_task_to_crab(task_information)
-            if result.returncode==0:
-                task_controller.setStatus(task_information['dataPeriod'], TaskStatus.duringFirstWorker)
-           
-        #FIRST STEP
-        
-        elif task_information['duringFirstWorker']==1:
-            result = wait_for_crab_task_to_finish(task_information) 
-            if result.returncode:
-                task_controller.setStatus(task_information['dataPeriod'], TaskStatus.afterFirstWorker)
-        
-        elif task_information['afterFirstWorker']==1:
-            print("AFTER FIRST WORKER")
-            if is_already_transfered(campaign, workflow, task_information['dataPeriod']):
-                task_controller.setStatus(task_information['dataPeriod'], TaskStatus.duringFirstHarvester) 
-            
-        elif task_information['duringFirstHarvester']==1:
-            print("DURING FIRST HARVESTER")
-
-        elif task_information['duringFirstHarvester']==1:
-            pass
-        
-        elif task_information['afterFirstHarvester']==1:
-            pass
-            
-        #SECOND STEP    
-        
-        elif task_information['duringSecondWorker']==1:
-            pass
-        
-        elif task_information['afterSecondWorker']==1:
-            pass
-            
-        elif task_information['duringSecondHarvester']==1:
-            pass
-
-        elif task_information['duringSecondHarvester']==1:
-            pass
-        
-        elif task_information['afterSecondHarvester']==1:
-            pass
-        
-        elif task_information['done']==1:
-            pass
     
     
