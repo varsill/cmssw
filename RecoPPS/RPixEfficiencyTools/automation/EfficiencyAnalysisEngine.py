@@ -101,11 +101,8 @@ def is_already_transfered(campaign, workflow, dataPeriod):
     
     
 def get_status(task_information, TaskStatusClass):
-    for member_name in TaskStatusClass.__members__.keys():
-        #if TaskStatusClass.__members__[member_name].__class__ != enum.auto:
-        #    continue
+    for member_name in TaskStatusClass.__statuses__:
         if task_information.get(member_name)==1:
-            
             return member_name
     raise Exception("Task is in neither of the states defined in TaskStatusClass")
 
@@ -118,8 +115,8 @@ def submit_task_to_crab(campaign, workflow, data_period, dataset, template):
 transition_dict = {
                         'initialized': (submit_task_to_crab, 0, TaskStatus.duringFirstWorker, [dataset, template] ),
                         'duringFirstWorker': (ctrl.check_if_crab_task_is_finished, True, TaskStatus.waitingForFirstWorkerTransfer, []),
-                        'waitingForFirstWorkerTransfer': (is_already_transfered, True, TaskStatus.duringFirstHarvester, [])
-    
+                        'waitingForFirstWorkerTransfer': (is_already_transfered, True, TaskStatus.duringFirstHarvester, []),
+                        'duringFirstHarvester': (lambda x,y,z : None, True, TaskStatus.duringFirstHarvester, [])
                   } 
 
 
