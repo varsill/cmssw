@@ -3,6 +3,7 @@ import argparse
 import subprocess
 import enum 
 import inspect
+from copy import deepcopy as dcopy
 
 campaign='test_campaign2'
 workflow='test_workflow'
@@ -15,10 +16,12 @@ def define_enum(TaskStatusClass):
 
 def decorate(TaskStatusClass):
     def wrapper(AdditionalClass):
+        TaskStatusClass.__allmembers__=[status for status in TaskStatusClass.__statuses__]
         for attr in AdditionalClass.__dict__:
             if not attr.startswith("_"):
+             
                 setattr(TaskStatusClass, attr, AdditionalClass.__dict__[attr])
-        
+                TaskStatusClass.__allmembers__.append(attr)
         return TaskStatusClass
     return wrapper
 
@@ -42,8 +45,8 @@ class TaskStatusEnum(enum.Enum):
 
 @decorate(TaskStatusEnum)
 class TaskStatus:
-    pass
-    
+    loop_id = 0.0    
+
 
 def get_tasks_numbers_list(tasks_list_path):
     with open(tasks_list_path) as tasks_list_path:
@@ -112,8 +115,15 @@ def submit_task_to_crab(campaign, workflow, data_period, dataset, template):
     return result
 
 
+def set_status(task_status):
+    task_status.duringFirstWorker=1
+    task_status.initialized=0
+    task_status.loop_id+=1
+    return task_status
+
+
 transition_dict = {
-                        'initialized': (submit_task_to_crab, 0, TaskStatus.duringFirstWorker, [dataset, template] ),
+                        'initialized': (submit_task_to_crab, 0, set_status, [dataset, template] ),
                         'duringFirstWorker': (ctrl.check_if_crab_task_is_finished, True, TaskStatus.waitingForFirstWorkerTransfer, []),
                         'waitingForFirstWorkerTransfer': (is_already_transfered, True, TaskStatus.duringFirstHarvester, []),
                         'duringFirstHarvester': (lambda x,y,z : None, True, TaskStatus.duringFirstHarvester, [])
@@ -123,9 +133,14 @@ transition_dict = {
 
 def perform_action(task_information, task_controller, TaskStatusClass):   
     func, expected_result, next_status, parms = transition_dict[get_status(task_information, TaskStatusClass)]
+    print("START", func.__name__)
     result = func(task_information['campaign'], task_information['workflow'], task_information['dataPeriod'], *parms)
+    print("END", result)
     if result==expected_result:
-       task_information=task_controller.setStatus(task_information['dataPeriod'], next_status)
+       if callable(next_status):
+        task_information = task_controller.setStatusWithStatusGenerator(task_information['dataPeriod'], next_status)
+       else:
+        task_information=task_controller.setStatus(task_information['dataPeriod'], next_status)
        return task_information
     return None
     

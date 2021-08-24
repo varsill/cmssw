@@ -2,7 +2,7 @@ from CRABClient.UserUtilities import config
 config = config()
 
 config.General.requestName = 'ctpps_2018B1_pixelefficiency_EGamma'
-config.General.workArea = '/afs/cern.ch/user/a/abellora/Work/CT-PPS/2018_EfficiencyTool/CMSSW_10_6_10/src/RecoPPS/RPixEfficiencyTools/ctpps_2018B1_pixelefficiency_singleele'
+config.General.workArea = '/afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools'
 config.General.transferOutputs = True
 config.General.transferLogs = True
 # config.General.instance = 'preprod' 
