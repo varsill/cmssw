@@ -86,7 +86,7 @@ process.dqmSaver.workflow = "/CalibPPS/AlignmentGlobal/CMSSW_11_3_0_pre4"
 process.dqmSaver.saveByRun = -1
 process.dqmSaver.saveAtJobEnd = True
 process.dqmSaver.forceRunNumber = 999999
-process.dqmSaver.dirName = './OutputFiles/'
+process.dqmSaver.dirName = options.outputDirectoryPath
 
 #SCHEDULE JOB
 process.path = cms.Path(

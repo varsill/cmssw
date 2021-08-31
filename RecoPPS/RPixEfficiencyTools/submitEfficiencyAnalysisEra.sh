@@ -18,7 +18,7 @@ else
 		eval 'echo "executable			= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/EfficiencyAnalysisEra.sh" 	>> Jobs/Era${1}.sub'
 		eval 'echo "arguments  			= ${1} $CMSSW_BASE" 														>> Jobs/Era${1}.sub'
 		eval 'echo "output 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/LogFiles/Era${1}.out" 		>> Jobs/Era${1}.sub'
-		eval 'echo "error 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/LogFiles/Era${1}.err"	 	>> Jobs/Era${1}.sub'
+		eval 'echo "error 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/LogFiles/Era${1}.err"	 	    >> Jobs/Era${1}.sub'
 		eval 'echo "log 				= $CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/LogFiles/Era${1}.log" 		>> Jobs/Era${1}.sub'
 		eval 'echo "+JobFlavour			= \"testmatch\""															>> Jobs/Era${1}.sub'
 		eval 'echo "notify_user			= lukasz.radoslaw.kita@cern.ch"												>> Jobs/Era${1}.sub'
