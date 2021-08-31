@@ -2,12 +2,8 @@ import automation_control as ctrl
 import argparse
 import subprocess
 import enum 
-import inspect
-from copy import deepcopy as dcopy
 import logging
-import sys
-from typing import Any, Type, Dict, Union
-
+from typing import Any, Type, Union
 
 logger = logging.getLogger("EfficiencyAnalysisLogger")
 logger.setLevel(logging.DEBUG)
@@ -80,6 +76,7 @@ def define_status_enum(TaskStatusClass: Type[enum.Enum])->Type[enum.Enum]:
     TaskStatusClass.__statuses__ = TaskStatusClass.__members__.keys()
     return TaskStatusClass
 
+
 def decorate_with_enum(TaskStatusClass: Type[Any])->Type[Any]:
     """Decorator for defining the TaskStatus class  
         
@@ -91,7 +88,7 @@ def decorate_with_enum(TaskStatusClass: Type[Any])->Type[Any]:
         The result class, apart from the __statuses__ special field has another special field - __allmembers__
         consisting of all user-defined member fields (both from the input class and the enum status class)
     """
-    def wrapper(AdditionalClass: Type[]):
+    def wrapper(AdditionalClass: Type[enum.Enum]):
         TaskStatusClass.__allmembers__=[status for status in TaskStatusClass.__statuses__]
         for attr in AdditionalClass.__dict__:
             if not attr.startswith("_"):
@@ -154,7 +151,7 @@ def process_new_tasks(tasks_list_path, task_controller):
     tasks_not_submited_yet = tasks_list-tasks_in_database
     if tasks_not_submited_yet:
         task_controller.submitTasks(tasks_not_submited_yet)
-
+   
 
 def flatten(t):
      return [item for sublist in t for item in sublist]
@@ -178,6 +175,7 @@ def is_already_transfered(campaign, workflow, dataPeriod):
     
     
 def get_status(task_information, TaskStatusClass):
+    
     for member_name in TaskStatusClass.__statuses__:
         if task_information.get(member_name)==1:
             return member_name
@@ -185,6 +183,7 @@ def get_status(task_information, TaskStatusClass):
 
 
 def submit_task_to_crab(campaign, workflow, data_period, dataset, template):
+    
     result = ctrl.submit_task_to_crab(campaign, workflow, data_period, get_runs_range(data_period), template, dataset)
     return result
 
@@ -215,11 +214,10 @@ def set_status_during_first_harvester(task_status, cluster_id):
 
 
 def wait_for_condor(campaign, workflow, data_period):
-    task_controller = ctrl.TaskCtrl.TaskControl(campaign=campaign, workflow=workflow, TaskStatusClass=TaskStatusClass)
+    task_controller = ctrl.TaskCtrl.TaskControl(campaign=campaign, workflow=workflow, TaskStatusClass=TaskStatus)
     last_task_status = task_controller.getLastTask(data_period=data_period)
     cluster_id = int(last_task_status.get("condor_job_id"))
     return ctrl.wait_for_condor(cluster_id)
-
 
 
 TRANSITIONS_DICT = {
@@ -231,19 +229,16 @@ TRANSITIONS_DICT = {
                    } 
 
 
-TaskInformation = Dict[Union[int, float, str]] #record from InfluxDB's "task" table
-TaskStatus = Type[Any] #class defined with decorate_with_enum() decorator
-
-def perform_action(task_information: TaskInformation, task_controller: ctrl.TaskCtrl.TaskControl, TaskStatusClass: TaskStatus)->Union[None, TaskInformation]:
+def perform_action(task_information: ctrl.TaskCtrl.TaskInformationType, task_controller: ctrl.TaskCtrl.TaskControl, TaskStatusClass: ctrl.TaskCtrl.TaskStatusType)->Union[None, ctrl.TaskCtrl.TaskInformationType]:
     """Attempts to proceed on automation workflow defined within TRANSITIONS_DICT
 
     Args:
-        task_information (TaskInformation): current task status 
+        task_information (ctrl.TaskCtrl.TaskInformationType): current task status 
         task_controller (ctrl.TaskCtrl.TaskControl): reference to task controller created for the purpouse of database connection etc.
-        TaskStatusClass (TaskStatus): task status class - class defined with decorate_with_enum() decorator (should be corresponding to the task_information record)
+        TaskStatusClass (ctrl.TaskCtrl.TaskStatus): task status class - class defined with decorate_with_enum() decorator (should be corresponding to the task_information record)
 
     Returns:
-        Union[None, TaskInformation]: New TaskInformation with the updated status after the successfull operation, None otherwise
+        Union[None, ctrl.TaskCtrl.TaskInformationType]: New TaskInformationType with the updated status after the successfull operation, None otherwise
     """
     try:   
         
@@ -266,12 +261,12 @@ def perform_action(task_information: TaskInformation, task_controller: ctrl.Task
         return None
     
 
-def process_tasks(task_controller: ctrl.TaskCtrl.TaskControl, TaskStatusClass: TaskStatus)->None:
+def process_tasks(task_controller: ctrl.TaskCtrl.TaskControl, TaskStatusClass: ctrl.TaskCtrl.TaskStatusType)->None:
     """Attempts to perform as many steps in automation control as possible. Stops if perform_action() returns None (meaning that its operation didn't finish successfully)
 
     Args:
         task_controller (ctrl.TaskCtrl.TaskControl): task controller managing database connection etc.
-        TaskStatusClass (TaskStatus): task status class - class defined with decorate_with_enum() decorator
+        TaskStatusClass (ctrl.TaskCtrl.TaskStatusType): task status class - class defined with decorate_with_enum() decorator
     """
     
     tasks_in_database_information_list = task_controller.getAllTasks().get_points()
@@ -285,8 +280,8 @@ def process_tasks(task_controller: ctrl.TaskCtrl.TaskControl, TaskStatusClass: T
 if __name__ == '__main__':
     parser = prepare_parser()
     opts = parser.parse_args()
-    task_controller = ctrl.TaskCtrl.TaskControl(campaign=campaign, workflow=workflow, TaskStatusClass=TaskStatusClass)
-    process_new_tasks(tasks_list_path, task_controller)
+    task_controller = ctrl.TaskCtrl.TaskControl(campaign=campaign, workflow=workflow, TaskStatusClass=TaskStatus)
+    process_new_tasks(opts.tasks_list_path, task_controller)
     process_tasks(task_controller, TaskStatusClass=TaskStatus)
     
     
