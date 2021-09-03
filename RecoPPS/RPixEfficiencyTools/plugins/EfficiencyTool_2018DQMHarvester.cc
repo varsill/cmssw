@@ -119,6 +119,56 @@ void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQM
 
       result->divide(numerator, denominator, 1., 1., "B");
     }
+
+    //INTERPOT
+    //#1
+    numMonitorName_ = Form("h1InterPotEfficiencyVsXi_arm%i_st%i_rp%i", armId, stationId, rpId);
+    denMonitorName_ = Form("h1AuxXi_arm%i_st%i_rp%i", armId, stationId, rpId);
+    resultName_ = Form("h1InterPotEfficiencyVsXiFinal_arm%i_st%i_rp%i", armId, stationId, rpId);
+
+    numerator = igetter.get(romanPotBinShiftFolderName+"/"+numMonitorName_);
+    denominator = igetter.get(romanPotBinShiftFolderName+"/"+denMonitorName_);
+    result = igetter.get(romanPotBinShiftFolderName+"/"+resultName_);
+
+    result->divide(numerator, denominator, 1., 1., "B");  
+
+    //#2
+    numMonitorName_ = Form("h2InterPotEfficiencyMap_arm%i_st%i_rp%i", armId, stationId, rpId);
+    denMonitorName_ = Form("h2AuxProtonHitDistribution_arm%i_st%i_rp%i", armId, stationId, rpId);
+    resultName_ = Form("h2InterPotEfficiencyMapFinal_arm%i_st%i_rp%i", armId, stationId, rpId);
+
+    numerator = igetter.get(romanPotBinShiftFolderName+"/"+numMonitorName_);
+    denominator = igetter.get(romanPotBinShiftFolderName+"/"+denMonitorName_);
+    result = igetter.get(romanPotBinShiftFolderName+"/"+resultName_);
+    
+    result->divide(numerator, denominator, 1., 1., "B"); 
+    std::string h2InterPotEfficiencyMapName  = Form("h2InterPotEfficiencyMap_arm%i_st%i_rp%i", armId, stationId, rpId);
+
+    // TH2D* h2InterPotEfficiencyMap_ = igetter.get(romanPotBinShiftFolderName+"/"+h2InterPotEfficiencyMapName)->
+    // for (auto i = 1; i < h2InterPotEfficiencyMap_->GetNbinsX(); i++) {
+    //     for (auto j = 1; j < h2InterPotEfficiencyMap_->GetNbinsY(); j++) {
+    //       double efficiency =
+    //           h2InterPotEfficiencyMap_->GetBinContent(i, j);
+    //       double tries = h2AuxProtonHitDistribution_->GetBinContent(i, j);
+    //       if (tries != 0) {
+    //         double error = TMath::Sqrt((efficiency * (1 - efficiency)) / tries);
+    //         h2InterPotEfficiencyMap_->SetBinError(i, j, error);
+    //       } else
+    //         h2InterPotEfficiencyMap_->SetBinError(i, j, 0);
+    //     }
+    // }
+    //#3
+    numMonitorName_ = Form("h2InterPotEfficiencyMapMultiRP_arm%i_st%i_rp%i", armId, stationId, rpId);
+    denMonitorName_ = Form("h2InterPotEfficiencyMapMultiRP_arm%i_st%i_rp%i", armId, stationId, rpId);
+    resultName_ = Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i_st%i_rp%i", armId, stationId, rpId);
+
+    numerator = igetter.get(romanPotBinShiftFolderName+"/"+numMonitorName_);
+    denominator = igetter.get(romanPotBinShiftFolderName+"/"+denMonitorName_);
+    result = igetter.get(romanPotBinShiftFolderName+"/"+resultName_);
+
+    result->divide(numerator, denominator, 1., 1., "B");  
+
+
   }
 }
 

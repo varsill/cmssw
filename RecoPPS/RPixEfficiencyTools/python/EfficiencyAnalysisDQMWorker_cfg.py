@@ -66,6 +66,48 @@ options.register('suplementaryPlots',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.bool,
                 "should add bin shifted hitTrackDistribution")
+
+
+#INTERPOT
+options.register('maxTracksInTagPot',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.int,
+                "Maximum pixel tracks in tag RP")
+options.register('minTracksInTagPot',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.int,
+                "Minimum pixel tracks in tag RP")
+options.register('maxTracksInProbePot',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.int,
+                "Maximum pixel tracks in probe RP")
+options.register('minTracksInProbePot',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.int,
+                "Mainimum pixel tracks in probe RP")
+options.register('maxChi2Prob',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.float,
+                "Maximum chi2 probability of the track")
+options.register('recoInfo',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.int,
+                "CTPPSpixelLocalTrackReconstructionInfo proton variable - -1 for no selection")
+options.maxChi2Prob = 0.999999
+options.maxTracksInTagPot = 99
+options.minTracksInTagPot = 0
+options.maxTracksInProbePot = 99
+options.minTracksInProbePot = 0
+options.recoInfo = -1
+
+
+
 options.parseArguments()
 
 
@@ -194,8 +236,16 @@ process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
     fiducialYHigh=cms.untracked.vdouble(fiducialYHigh),
     producerTag=cms.untracked.string("ReMiniAOD"),
     detectorTiltAngle=cms.untracked.double(18.4),
-    detectorRotationAngle=cms.untracked.double(-8)
+    detectorRotationAngle=cms.untracked.double(-8),
 
+    #FOR INTERPORT EFFICIENCY
+    maxChi2Prob=cms.untracked.double(options.maxChi2Prob),
+    maxTracksInProbePot=cms.untracked.int32(options.maxTracksInProbePot),    
+    minTracksInProbePot=cms.untracked.int32(options.minTracksInProbePot),    
+    maxTracksInTagPot=cms.untracked.int32(options.maxTracksInTagPot),    
+    minTracksInTagPot=cms.untracked.int32(options.minTracksInTagPot),  
+    recoInfo=cms.untracked.int32(options.recoInfo),
+    debug=cms.untracked.bool(True),
 )
 
 
