@@ -8,3 +8,4 @@ automation/automation_control/
 automation/automation_jenkins/  
 automation/crab_*
 *crab.log*
+*.root

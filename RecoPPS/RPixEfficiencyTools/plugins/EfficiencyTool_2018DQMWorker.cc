@@ -275,7 +275,7 @@ private:
   //     {CTPPSPixelDetId(1, 2, 3), 0}};
 
   // output histograms
-  std::map<CTPPSPixelDetId, MonitorElement *> h2AuxProtonHitDistribution_;
+  std::map<CTPPSPixelDetId, MonitorElement *> h2ProtonHitExpectedDistribution_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2AuxProtonHitDistributionWithNoMultiRP_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2InterPotEfficiencyMap_;
   std::map<CTPPSPixelDetId, MonitorElement *> h2InterPotEfficiencyMapMultiRP_;
@@ -641,7 +641,7 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
     
 
         if (fancyBinning_) {
-          h2AuxProtonHitDistribution_[pixelDetId] = ibooker.book2DD(
+          h2ProtonHitExpectedDistribution_[pixelDetId] = ibooker.book2DD(
               Form("h2ProtonHitExpectedDistribution_arm%i_st%i_rp%i", arm_Probe,
                   station_Probe, rp_Probe),
               Form(
@@ -694,7 +694,7 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
               mapYmin, mapYmax);
 
         } else {
-          h2AuxProtonHitDistribution_[pixelDetId] = ibooker.book2DD(
+          h2ProtonHitExpectedDistribution_[pixelDetId] = ibooker.book2DD(
               Form("h2ProtonHitExpectedDistribution_arm%i_st%i_rp%i", arm_Probe,
                   station_Probe, rp_Probe),
               Form(
@@ -1276,7 +1276,7 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
       std::cout << "WARNING: More than one multiRP matched!" << std::endl;
     }
 
-    h2AuxProtonHitDistribution_[pixelDetId]->Fill(expectedTrackX0_Probe,
+    h2ProtonHitExpectedDistribution_[pixelDetId]->Fill(expectedTrackX0_Probe,
                                                   expectedTrackY0_Probe);
     if (multiRPmatchFound == 0)
       h2AuxProtonHitDistributionWithNoMultiRP_[pixelDetId]->Fill(
@@ -1559,8 +1559,8 @@ bool EfficiencyTool_2018DQMWorker::Cut(CTPPSLocalTrackLite track)
       std::cout << "fiducialYLow cut not passed" << std::endl;
     if (x < fiducialXLow_[std::pair<int, int>(arm, station)])
       std::cout << "fiducialXLow cut not passed" << std::endl;
-    std::cout<<"NEITHER OF THEM"<<std::endl;
   }
+  //if(station!=0)return true; //we are cutting tracks from stations other than the one nearest to the detector
   if (TMath::Abs(track.tx()) > maxTx || TMath::Abs(track.ty()) > maxTy ||
       track.chiSquaredOverNDF() * ndf > maxChi2 ||
       track.numberOfPointsUsedForFit() < minNumberOfPlanesForTrack_ ||
