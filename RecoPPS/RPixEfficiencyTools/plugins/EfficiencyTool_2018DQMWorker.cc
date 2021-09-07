@@ -1043,7 +1043,6 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
     
     if (!proton_Tag.validFit())
     {
-      //std::cout<<"HERE7"<<std::endl;
       continue;
     }
     
@@ -1057,15 +1056,12 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
     double trackY0_Tag = track_Tag.y();
     double trackTx_Tag = track_Tag.tx();
     double trackTy_Tag = track_Tag.ty();
-    //std::cout<<trackX0_Tag<<" "<<trackY0_Tag<<" "<<trackTx_Tag<<" "<<trackTy_Tag<<std::endl;
     double xi_Tag = proton_Tag.xi();
     int matches = 0;
 
     if (trackMux_[detId_Tag] > maxTracksInTagPot ||
         trackMux_[detId_Tag] < minTracksInTagPot)
     {
-
-      std::cout<<"SKIPPIGN "<<trackMux_[detId_Tag]<<"MIN "<<minTracksInTagPot<<"MAX "<<maxTracksInTagPot<<std::endl;
       continue;
     }
     // Start only from strips
@@ -1082,12 +1078,9 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
     // continue;
 
     // Apply the cuts
-    if (Cut(track_Tag))
-    {
-      //std::cout<<"HERE5"<<std::endl;
-      continue;
-    }
-    //std::cout<<"I AM HERE "<<std::endl;
+    if (Cut(track_Tag))continue;
+    
+    if(station_Tag!=0)continue; //we are cutting tracks from stations other than the one nearest to the detector
     uint32_t arm_Probe = detId_Tag.arm();
     uint32_t station_Probe = (detId_Tag.station() == 0) ? 2 : 0;
     uint32_t rp_Probe = detId_Tag.rp();
@@ -1099,7 +1092,6 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
     if (trackMux_[detId_Probe] > maxTracksInProbePot ||
         trackMux_[detId_Probe] < minTracksInProbePot)
         {
-          //std::cout<<"HERE6"<<std::endl;
           continue;
         }
 
@@ -1560,7 +1552,7 @@ bool EfficiencyTool_2018DQMWorker::Cut(CTPPSLocalTrackLite track)
     if (x < fiducialXLow_[std::pair<int, int>(arm, station)])
       std::cout << "fiducialXLow cut not passed" << std::endl;
   }
-  //if(station!=0)return true; //we are cutting tracks from stations other than the one nearest to the detector
+  
   if (TMath::Abs(track.tx()) > maxTx || TMath::Abs(track.ty()) > maxTy ||
       track.chiSquaredOverNDF() * ndf > maxChi2 ||
       track.numberOfPointsUsedForFit() < minNumberOfPlanesForTrack_ ||

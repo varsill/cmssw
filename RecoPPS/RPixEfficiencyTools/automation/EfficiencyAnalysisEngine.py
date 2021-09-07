@@ -206,6 +206,7 @@ def submit_task_to_condor(campaign, workflow, data_period):
     return ctrl.submit_task_to_condor(campaign, workflow, data_period, executable)
 
 
+
 def set_status_during_first_harvester(task_status, cluster_id):
     task_status.waitingForFirstHarvester=1
     task_status.duringFirstHarvester=0
@@ -229,7 +230,7 @@ TRANSITIONS_DICT = {
                    } 
 
 
-def perform_action(task_information: ctrl.TaskCtrl.TaskInformationType, task_controller: ctrl.TaskCtrl.TaskControl, TaskStatusClass: ctrl.TaskCtrl.TaskStatusType)->Union[None, ctrl.TaskCtrl.TaskInformationType]:
+def perform_action(task_information: ctrl.TaskCtrl.TaskInformationType, task_controller: ctrl.TaskCtrl.TaskControl, TaskStatusClass: ctrl.TaskCtrl.TaskStatusClassType)->Union[None, ctrl.TaskCtrl.TaskInformationType]:
     """Attempts to proceed on automation workflow defined within TRANSITIONS_DICT
 
     Args:
@@ -261,12 +262,12 @@ def perform_action(task_information: ctrl.TaskCtrl.TaskInformationType, task_con
         return None
     
 
-def process_tasks(task_controller: ctrl.TaskCtrl.TaskControl, TaskStatusClass: ctrl.TaskCtrl.TaskStatusType)->None:
+def process_tasks(task_controller: ctrl.TaskCtrl.TaskControl, TaskStatusClass: ctrl.TaskCtrl.TaskStatusClassType)->None:
     """Attempts to perform as many steps in automation control as possible. Stops if perform_action() returns None (meaning that its operation didn't finish successfully)
 
     Args:
         task_controller (ctrl.TaskCtrl.TaskControl): task controller managing database connection etc.
-        TaskStatusClass (ctrl.TaskCtrl.TaskStatusType): task status class - class defined with decorate_with_enum() decorator
+        TaskStatusClass (ctrl.TaskCtrl.TaskStatusClassType): task status class - class defined with decorate_with_enum() decorator
     """
     
     tasks_in_database_information_list = task_controller.getAllTasks().get_points()

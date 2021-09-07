@@ -562,7 +562,9 @@ void InterpotEfficiency_2018::analyze(const edm::Event &iEvent,
       bool xiMatchPass = false;
       bool yMatchPass = false;
       bool xMatchPass = false;
-
+      
+      //NEAR - Tag, FAR - Probe 
+      
       // Make it so that the difference is always NEAR - FAR
       double xiDiff =
           (station_Tag == 0) ? xi_Tag - xi_Probe : xi_Probe - xi_Tag;

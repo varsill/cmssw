@@ -69,8 +69,13 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '113X_dataRun2_v6')
 
 
 #PREPARE SOURCE
+print("TEST", options.inputFileName)
+input_files = ""
+for file_name in options.inputFileName:
+    input_files+="file:"+file_name+"\n"
+print("INPUT FILES ", input_files)
 process.source = cms.Source("DQMRootSource",
-    fileNames = cms.untracked.vstring("file:"+options.inputFileName),
+    fileNames = cms.untracked.vstring(input_files),
 )
 
 #SETUP HARVESTER
