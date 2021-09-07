@@ -198,7 +198,6 @@ private:
                  // Sigma > >
 
   std::vector<CTPPSPixelDetId> detectorIdVector_;
-  std::vector<CTPPSPixelDetId> romanPotIdVector_;
 
   double detectorTiltAngle;
   double detectorRotationAngle;
@@ -621,7 +620,7 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
                 mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
           }
         }
-        //INTERPOT
+        //INTERPOT - TRACK MUX
         
         CTPPSPixelDetId detId_Tag = CTPPSPixelDetId(arm, station, rp);
         h1TrackMux_[detId_Tag] = ibooker.book1DD(Form("h1TrackMux_arm%i_st%i_rp%i", detId_Tag.arm(),
@@ -629,177 +628,139 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker& ibooker, ed
                   Form("h1TrackMux_arm%i_st%i_rp%i", detId_Tag.arm(),
                       detId_Tag.station(), detId_Tag.rp()),
                   11, 0, 11);
-
+      }
+      //INTERPOT - REST
+      for(int arm=0; arm<=1; arm++)
+      {
+        std::string folderName = Form("Arm%i", arm);
+        ibooker.setCurrentFolder(folderName);
         uint32_t arm_Probe = arm;
-        uint32_t station_Probe = station;
-        uint32_t rp_Probe = rp;
-
+        uint32_t station_Probe = 2;
+        uint32_t rp_Probe = 3;
 
         CTPPSPixelDetId pixelDetId(arm_Probe, station_Probe, rp_Probe);
 
-        romanPotIdVector_.push_back(pixelDetId);
-    
-
         if (fancyBinning_) {
           h2ProtonHitExpectedDistribution_[pixelDetId] = ibooker.book2DD(
-              Form("h2ProtonHitExpectedDistribution_arm%i_st%i_rp%i", arm_Probe,
-                  station_Probe, rp_Probe),
-              Form(
-                  "h2ProtonHitExpectedDistribution_arm%i_st%i_rp%i;x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+              Form("h2ProtonHitExpectedDistribution_arm%i", arm_Probe),
+              Form("h2ProtonHitExpectedDistribution_arm%i;x (mm);y (mm)", arm_Probe),
               nBinsX_total[pixelDetId], get_min(xBinEdges[pixelDetId]), get_max(xBinEdges[pixelDetId]), mapYbins,
               mapYmin, mapYmax);
           h2AuxProtonHitDistributionWithNoMultiRP_[pixelDetId] = ibooker.book2DD(
-              Form("h2ProtonHitExpectedDistributionWithNoMultiRP_arm%i_st%i_rp%i",
-                  arm_Probe, station_Probe, rp_Probe),
-              Form("h2ProtonHitExpectedDistributionWithNoMultiRP_arm%i_st%i_rp%i;"
+              Form("h2ProtonHitExpectedDistributionWithNoMultiRP_arm%i", arm_Probe),
+              Form("h2ProtonHitExpectedDistributionWithNoMultiRP_arm%i;"
                   "x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+                  arm_Probe),
               nBinsX_total[pixelDetId], get_min(xBinEdges[pixelDetId]), get_max(xBinEdges[pixelDetId]), mapYbins,
               mapYmin, mapYmax);
           h2InterPotEfficiencyMap_[pixelDetId] = ibooker.book2DD(
-              Form("h2InterPotEfficiencyMap_arm%i_st%i_rp%i", arm_Probe,
-                  station_Probe, rp_Probe),
-              Form("h2InterPotEfficiencyMap_arm%i_st%i_rp%i;x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+              Form("h2InterPotEfficiencyMap_arm%i", arm_Probe),
+              Form("h2InterPotEfficiencyMap_arm%i;x (mm);y (mm)",
+                  arm_Probe),
               nBinsX_total[pixelDetId], get_min(xBinEdges[pixelDetId]), get_max(xBinEdges[pixelDetId]), mapYbins,
               mapYmin, mapYmax);
 
           ibooker.book2DD(
-              Form("h2InterPotEfficiencyMapFinal_arm%i_st%i_rp%i", arm_Probe,
-                  station_Probe, rp_Probe),
-              Form("h2InterPotEfficiencyMapFinal_arm%i_st%i_rp%i;x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+              Form("h2InterPotEfficiencyMapFinal_arm%i", arm_Probe),
+              Form("h2InterPotEfficiencyMapFinal_arm%i;x (mm);y (mm)", arm_Probe),
               nBinsX_total[pixelDetId], get_min(xBinEdges[pixelDetId]), get_max(xBinEdges[pixelDetId]), mapYbins,
               mapYmin, mapYmax);
 
 
 
           h2InterPotEfficiencyMapMultiRP_[pixelDetId] = ibooker.book2DD(
-              Form("h2InterPotEfficiencyMapMultiRP_arm%i_st%i_rp%i", arm_Probe,
-                  station_Probe, rp_Probe),
-              Form("h2InterPotEfficiencyMapMultiRP_arm%i_st%i_rp%i;x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+              Form("h2InterPotEfficiencyMapMultiRP_arm%i", arm_Probe),
+              Form("h2InterPotEfficiencyMapMultiRP_arm%i;x (mm);y (mm)", arm_Probe),
               nBinsX_total[pixelDetId], get_min(xBinEdges[pixelDetId]), get_max(xBinEdges[pixelDetId]), mapYbins,
               mapYmin, mapYmax);
 
 
 
           ibooker.book2DD(
-              Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i_st%i_rp%i", arm_Probe,
-                  station_Probe, rp_Probe),
-              Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i_st%i_rp%i;x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+              Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i", arm_Probe),
+              Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i;x (mm);y (mm)", arm_Probe),
               nBinsX_total[pixelDetId], get_min(xBinEdges[pixelDetId]), get_max(xBinEdges[pixelDetId]), mapYbins,
               mapYmin, mapYmax);
 
         } else {
           h2ProtonHitExpectedDistribution_[pixelDetId] = ibooker.book2DD(
-              Form("h2ProtonHitExpectedDistribution_arm%i_st%i_rp%i", arm_Probe,
-                  station_Probe, rp_Probe),
-              Form(
-                  "h2ProtonHitExpectedDistribution_arm%i_st%i_rp%i;x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+              Form("h2ProtonHitExpectedDistribution_arm%i", arm_Probe),
+              Form("h2ProtonHitExpectedDistribution_arm%i;x (mm);y (mm)", arm_Probe),
               mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
           h2AuxProtonHitDistributionWithNoMultiRP_[pixelDetId] = ibooker.book2DD(
-              Form("h2ProtonHitExpectedDistributionWithNoMultiRP_arm%i_st%i_rp%i",
-                  arm_Probe, station_Probe, rp_Probe),
-              Form("h2ProtonHitExpectedDistributionWithNoMultiRP_arm%i_st%i_rp%i;"
-                  "x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+              Form("h2ProtonHitExpectedDistributionWithNoMultiRP_arm%i", arm_Probe),
+              Form("h2ProtonHitExpectedDistributionWithNoMultiRP_arm%i;"
+                  "x (mm);y (mm)", arm_Probe),
               mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
+
+          
           h2InterPotEfficiencyMap_[pixelDetId] = ibooker.book2DD(
-              Form("h2InterPotEfficiencyMap_arm%i_st%i_rp%i", arm_Probe,
-                  station_Probe, rp_Probe),
-              Form("h2InterPotEfficiencyMap_arm%i_st%i_rp%i;x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+              Form("h2InterPotEfficiencyMap_arm%i", arm_Probe),
+              Form("h2InterPotEfficiencyMap_arm%i;x (mm);y (mm)", arm_Probe),
               mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
           h2InterPotEfficiencyMapMultiRP_[pixelDetId] = ibooker.book2DD(
-              Form("h2InterPotEfficiencyMapMultiRP_arm%i_st%i_rp%i", arm_Probe,
-                  station_Probe, rp_Probe),
-              Form("h2InterPotEfficiencyMapMultiRP_arm%i_st%i_rp%i;x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+              Form("h2InterPotEfficiencyMapMultiRP_arm%i", arm_Probe),
+              Form("h2InterPotEfficiencyMapMultiRP_arm%i;x (mm);y (mm)", rp_Probe),
               mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
 
           ibooker.book2DD(
-              Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i_st%i_rp%i", arm_Probe,
-                  station_Probe, rp_Probe),
-              Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i_st%i_rp%i;x (mm);y (mm)",
-                  arm_Probe, station_Probe, rp_Probe),
+              Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i", arm_Probe),
+              Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i;x (mm);y (mm)", arm_Probe),
               mapXbins, mapXmin, mapXmax, mapYbins, mapYmin, mapYmax);
         }
         h1InterPotEfficiencyVsXi_[pixelDetId] = ibooker.book1DD(
-            Form("h1InterPotEfficiencyVsXi_arm%i_st%i_rp%i", arm_Probe,
-                station_Probe, rp_Probe),
-            Form("h1InterPotEfficiencyVsXi_arm%i_st%i_rp%i;#xi;Efficiency",
-                arm_Probe, station_Probe, rp_Probe),
+            Form("h1InterPotEfficiencyVsXi_arm%i", arm_Probe),
+            Form("h1InterPotEfficiencyVsXi_arm%i;#xi;Efficiency", arm_Probe),
             xiBins, xiMin, xiMax);
 
         ibooker.book1DD(
-            Form("h1InterPotEfficiencyVsXiFinal_arm%i_st%i_rp%i", arm_Probe,
-                station_Probe, rp_Probe),
-            Form("h1InterPotEfficiencyVsXiFinal_arm%i_st%i_rp%i;#xi;Efficiency",
-                arm_Probe, station_Probe, rp_Probe),
+            Form("h1InterPotEfficiencyVsXiFinal_arm%i", arm_Probe),
+            Form("h1InterPotEfficiencyVsXiFinal_arm%i;#xi;Efficiency", arm_Probe),
             xiBins, xiMin, xiMax);
 
 
         h1AuxXi_[pixelDetId] = ibooker.book1DD(
-            Form("h1AuxXi_arm%i_st%i_rp%i", arm_Probe, station_Probe, rp_Probe),
-            Form("h1AuxXi_arm%i_st%i_rp%i;#xi;Efficiency", arm_Probe,
-                station_Probe, rp_Probe),
+            Form("h1AuxXi_arm%i", arm_Probe),
+            Form("h1AuxXi_arm%i;#xi;Efficiency", arm_Probe),
             xiBins, xiMin, xiMax);
         h1DeltaXiMatch_[pixelDetId] =
-            ibooker.book1DD(Form("h1DeltaXiMatch_arm%i_st%i_rp%i", arm_Probe,
-                          station_Probe, rp_Probe),
-                    Form("h1DeltaXiMatch_arm%i_st%i_rp%i;#Delta_{#xi}",
-                          arm_Probe, station_Probe, rp_Probe),
+            ibooker.book1DD(Form("h1DeltaXiMatch_arm%i", arm_Probe),
+                    Form("h1DeltaXiMatch_arm%i;#Delta_{#xi}", arm_Probe),
                     100, -0.02, 0.02);
         h1DeltaYMatch_[pixelDetId] =
-            ibooker.book1DD(Form("h1DeltaYMatch_arm%i_st%i_rp%i", arm_Probe,
-                          station_Probe, rp_Probe),
-                    Form("h1DeltaYMatch_arm%i_st%i_rp%i;#Delta_{#xi}", arm_Probe,
-                          station_Probe, rp_Probe),
+            ibooker.book1DD(Form("h1DeltaYMatch_arm%i", arm_Probe),
+                    Form("h1DeltaYMatch_arm%i;#Delta_{#xi}", arm_Probe),
                     100, -5, 5);
         h1TxMatch_[pixelDetId] = ibooker.book1DD(
-            Form("h1TxMatch_arm%i_st%i_rp%i", arm_Probe, station_Probe, rp_Probe),
-            Form("h1TxMatch_%i_st%i_rp%i;Tx", arm_Probe, station_Probe, rp_Probe),
+            Form("h1TxMatch_arm%i", arm_Probe),
+            Form("h1TxMatch_%i;Tx", arm_Probe),
             100, -0.02, 0.02);
         h1TyMatch_[pixelDetId] = ibooker.book1DD(
-            Form("h1TyMatch_arm%i_st%i_rp%i", arm_Probe, station_Probe, rp_Probe),
-            Form("h1TyMatch_%i_st%i_rp%i;Ty", arm_Probe, station_Probe, rp_Probe),
+            Form("h1TyMatch_arm%i", arm_Probe),
+            Form("h1TyMatch_%i;Ty", arm_Probe),
             100, -0.02, 0.02);
         h1ProtonsInProbePotWhenNoMatchFound_[pixelDetId] =
-            ibooker.book1DD(Form("h1ProtonsInProbePotWhenNoMatchFound_arm%i_st%i_rp%i",
-                          arm_Probe, station_Probe, rp_Probe),
-                    Form("h1ProtonsInProbePotWhenNoMatchFound_arm%i_st%i_rp%i",
-                          arm_Probe, station_Probe, rp_Probe),
+            ibooker.book1DD(Form("h1ProtonsInProbePotWhenNoMatchFound_arm%i", arm_Probe),
+                    Form("h1ProtonsInProbePotWhenNoMatchFound_arm%i", arm_Probe),
                     11, 0, 11);
         h2XCorrelationMatch_[pixelDetId] =
-            ibooker.book2DD(Form("h2XCorrelationMatch_arm%i_st%i_rp%i", arm_Probe,
-                          station_Probe, rp_Probe),
-                    Form("h2XCorrelationMatch_arm%i_st%i_rp%i;x pixel (mm);x "
-                          "strips (mm)",
-                          arm_Probe, station_Probe, rp_Probe),
+            ibooker.book2DD(Form("h2XCorrelationMatch_arm%i", arm_Probe),
+                    Form("h2XCorrelationMatch_arm%i;x pixel (mm);x "
+                          "strips (mm)", arm_Probe),
                     mapXbins, mapXmin, mapXmax, mapXbins, mapXmin, mapXmax);
         h2YCorrelationMatch_[pixelDetId] = ibooker.book2DD(
-            Form("h2YCorrelationMatch_arm%i_st%i_rp%i", arm_Probe, station_Probe,
-                rp_Probe),
-            Form("h2YCorrelationMatch_arm%i_st%i_rp%i;y pixel (mm);y strips (mm)",
-                arm_Probe, station_Probe, rp_Probe),
+            Form("h2YCorrelationMatch_arm%i", arm_Probe),
+            Form("h2YCorrelationMatch_arm%i;y pixel (mm);y strips (mm)", arm_Probe),
             mapYbins, mapYmin, mapYmax, mapYbins, mapYmin, mapYmax);
         h2TxCorrelationMatch_[pixelDetId] =
-            ibooker.book2DD(Form("h2TxCorrelationMatch_arm%i_st%i_rp%i", arm_Probe,
-                          station_Probe, rp_Probe),
-                    Form("h2TxCorrelationMatch_arm%i_st%i_rp%i;Tx pixel (mm);Ty "
-                          "pixel (mm)",
-                          arm_Probe, station_Probe, rp_Probe),
+            ibooker.book2DD(Form("h2TxCorrelationMatch_arm%i", arm_Probe),
+                    Form("h2TxCorrelationMatch_arm%i;Tx pixel (mm);Ty "
+                          "pixel (mm)", arm_Probe),
                     100, -0.01, 0.01, 100, -0.01, 0.01);
         h2TyCorrelationMatch_[pixelDetId] =
-            ibooker.book2DD(Form("h2TyCorrelationMatch_arm%i_st%i_rp%i", arm_Probe,
-                          station_Probe, rp_Probe),
-                    Form("h2TyCorrelationMatch_arm%i_st%i_rp%i;Tx pixel (mm);Ty "
-                          "pixel (mm)",
-                          arm_Probe, station_Probe, rp_Probe),
+            ibooker.book2DD(Form("h2TyCorrelationMatch_arm%i", arm_Probe),
+                    Form("h2TyCorrelationMatch_arm%i;Tx pixel (mm);Ty "
+                          "pixel (mm)", arm_Probe),
                     100, -0.01, 0.01, 100, -0.01, 0.01);
 
       }

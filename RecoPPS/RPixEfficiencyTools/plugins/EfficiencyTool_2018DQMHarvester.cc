@@ -119,12 +119,13 @@ void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQM
 
       result->divide(numerator, denominator, 1., 1., "B");
     }
-
+    if(stationId!=0)continue;
     //INTERPOT
+    romanPotBinShiftFolderName = "Arm%i";
     //#1
-    numMonitorName_ = Form("h1InterPotEfficiencyVsXi_arm%i_st%i_rp%i", armId, stationId, rpId);
-    denMonitorName_ = Form("h1AuxXi_arm%i_st%i_rp%i", armId, stationId, rpId);
-    resultName_ = Form("h1InterPotEfficiencyVsXiFinal_arm%i_st%i_rp%i", armId, stationId, rpId);
+    numMonitorName_ = Form("h1InterPotEfficiencyVsXi_arm%i", armId);
+    denMonitorName_ = Form("h1AuxXi_arm%i", armId);
+    resultName_ = Form("h1InterPotEfficiencyVsXiFinal_arm%i", armId);
 
     numerator = igetter.get(romanPotBinShiftFolderName+"/"+numMonitorName_);
     denominator = igetter.get(romanPotBinShiftFolderName+"/"+denMonitorName_);
@@ -136,9 +137,9 @@ void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQM
     }
 
     //#2
-    numMonitorName_ = Form("h2InterPotEfficiencyMap_arm%i_st%i_rp%i", armId, stationId, rpId);
-    denMonitorName_ = Form("h2AuxProtonHitDistribution_arm%i_st%i_rp%i", armId, stationId, rpId);
-    resultName_ = Form("h2InterPotEfficiencyMapFinal_arm%i_st%i_rp%i", armId, stationId, rpId);
+    numMonitorName_ = Form("h2InterPotEfficiencyMap_arm%i", armId);
+    denMonitorName_ = Form("h2AuxProtonHitDistribution_arm%i", armId);
+    resultName_ = Form("h2InterPotEfficiencyMapFinal_arm%i", armId);
 
     numerator = igetter.get(romanPotBinShiftFolderName+"/"+numMonitorName_);
     denominator = igetter.get(romanPotBinShiftFolderName+"/"+denMonitorName_);
@@ -171,9 +172,9 @@ void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQM
     //#3
 
     
-    numMonitorName_ = Form("h2InterPotEfficiencyMapMultiRP_arm%i_st%i_rp%i", armId, stationId, rpId);
-    denMonitorName_ = Form("h2ProtonHitExpectedDistribution_arm%i_st%i_rp%i", armId, stationId, rpId);
-    resultName_ = Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i_st%i_rp%i", armId, stationId, rpId);
+    numMonitorName_ = Form("h2InterPotEfficiencyMapMultiRP_arm%i", armId);
+    denMonitorName_ = Form("h2ProtonHitExpectedDistribution_arm%i", armId);
+    resultName_ = Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i", armId);
 
     numerator = igetter.get(romanPotBinShiftFolderName+"/"+numMonitorName_);
     denominator = igetter.get(romanPotBinShiftFolderName+"/"+denMonitorName_);
