@@ -127,23 +127,23 @@ if options.useJsonFile == True:
     print(jsonFileName)
     process.source.lumisToProcess = LumiList.LumiList(filename = jsonFileName).getVLuminosityBlockRange()
 
-runToScheme = {}
-with open("./data/RunToScheme2018.csv") as runToSchemeFile:
-    firstcycle = True
-    next(runToSchemeFile)
-    for line in runToSchemeFile:
-       (run, fill, injectionScheme) = line.split(", ")
-       runToScheme[int(run)] = injectionScheme.rstrip()
+# runToScheme = {}
+# with open("./data/RunToScheme2018.csv") as runToSchemeFile:
+#     firstcycle = True
+#     next(runToSchemeFile)
+#     for line in runToSchemeFile:
+#        (run, fill, injectionScheme) = line.split(", ")
+#        runToScheme[int(run)] = injectionScheme.rstrip()
 
-if options.bunchSelection != 'NoSelection' and options.bunchSelection != '':
-    if options.runNumber in runToScheme.keys():
-        injectionSchemeFileName = './data/2018_FillingSchemes/'+runToScheme[options.runNumber]+'.csv'
-    else:
-        injectionSchemeFileName = options.injectionSchemeFileName
-    print("Using filling scheme: "+injectionSchemeFileName)
-else:
-    injectionSchemeFileName = ''
-
+# if options.bunchSelection != 'NoSelection' and options.bunchSelection != '':
+#     if options.runNumber in runToScheme.keys():
+#         injectionSchemeFileName = './data/2018_FillingSchemes/'+runToScheme[options.runNumber]+'.csv'
+#     else:
+#         injectionSchemeFileName = options.injectionSchemeFileName
+#     print("Using filling scheme: "+injectionSchemeFileName)
+# else:
+#     injectionSchemeFileName = ''
+injectionSchemeFileName = ''
 runNumber=options.runNumber
 if runNumber < firstRunOfTheYear:
     print("This run belongs to before 2018 data taking")
@@ -234,7 +234,7 @@ process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
     fiducialXLow=cms.untracked.vdouble(fiducialXLow),
     fiducialYLow=cms.untracked.vdouble(fiducialYLow),
     fiducialYHigh=cms.untracked.vdouble(fiducialYHigh),
-    producerTag=cms.untracked.string("ReMiniAOD"),
+    producerTag=cms.untracked.string(""),
     detectorTiltAngle=cms.untracked.double(18.4),
     detectorRotationAngle=cms.untracked.double(-8),
 

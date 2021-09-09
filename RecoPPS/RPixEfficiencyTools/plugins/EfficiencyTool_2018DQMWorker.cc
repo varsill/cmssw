@@ -328,9 +328,9 @@ EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterS
   producerTag = iConfig.getUntrackedParameter<std::string>("producerTag");
 
   pixelLocalTrackToken_ = consumes<edm::DetSetVector<CTPPSPixelLocalTrack>>(
-      edm::InputTag("ctppsPixelLocalTracks", "",producerTag));
-  pixelRecHitToken_ = consumes<edm::DetSetVector<CTPPSPixelRecHit>>(
-      edm::InputTag("ctppsPixelRecHits", "", producerTag));
+                          edm::InputTag("ctppsPixelLocalTracks", "", producerTag));
+  // pixelRecHitToken_ = consumes<edm::DetSetVector<CTPPSPixelRecHit>>(
+  //     edm::InputTag("ctppsPixelRecHits", "", producerTag));
   minNumberOfPlanesForEfficiency_ =
       iConfig.getParameter<int>("minNumberOfPlanesForEfficiency");
   minNumberOfPlanesForTrack_ =
@@ -784,8 +784,8 @@ void EfficiencyTool_2018DQMWorker::dqmBeginRun(edm::Run const &, edm::EventSetup
 void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
                                   const edm::EventSetup &iSetup) {
   using namespace edm;
-  Handle<edm::DetSetVector<CTPPSPixelRecHit>> pixelRecHits;
-  iEvent.getByToken(pixelRecHitToken_, pixelRecHits);
+  // Handle<edm::DetSetVector<CTPPSPixelRecHit>> pixelRecHits;
+  // iEvent.getByToken(pixelRecHitToken_, pixelRecHits);
 
   Handle<edm::DetSetVector<CTPPSPixelLocalTrack>> pixelLocalTracks;
   iEvent.getByToken(pixelLocalTrackToken_, pixelLocalTracks);
@@ -810,8 +810,6 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
     uint32_t arm = rpId.arm();
     uint32_t rp = rpId.rp();
     uint32_t station = rpId.station();
-
-    
 
     
     for (const auto &pixeltrack : rpPixeltrack) {

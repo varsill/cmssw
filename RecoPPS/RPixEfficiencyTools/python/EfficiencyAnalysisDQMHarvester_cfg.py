@@ -74,7 +74,6 @@ file_names_list = options.inputFileName.split(",")
 input_files = ""
 for file_name in file_names_list:
     input_files+="file:"+file_name+"\n"
-
 process.source = cms.Source("DQMRootSource",
     fileNames = cms.untracked.vstring(input_files),
 )

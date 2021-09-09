@@ -1,9 +1,12 @@
+from weakref import WeakKeyDictionary
 import automation_control as ctrl
 import argparse
 import subprocess
 import enum 
 import logging
 from typing import Any, Type, Union
+from os import listdir, walk
+from os.path import isfile, join
 
 logger = logging.getLogger("EfficiencyAnalysisLogger")
 logger.setLevel(logging.DEBUG)
@@ -21,10 +24,10 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 campaign='test_campaign2'
-workflow='test_workflow'
+workflow='test_workflow2'
 dataset = "/Charmonium/Run2018B-12Nov2019_UL2018-v1/AOD"
-template = "CrabConfigTemplate.py"
-
+template_for_first_module = "CrabConfigTemplateForFirstModule.py"
+template_for_second_module = "CrabConfigTemplateForSecondModule.py"
 
 class AnyClass():
     """Class for performing generic comparision
@@ -111,8 +114,9 @@ class TaskStatusEnum(enum.Enum):
     waitingForFirstHarvester = enum.auto(),
     afterFirstHarvester = enum.auto(),
     duringSecondWorker = enum.auto(),
-    afterSecondWorker= enum.auto(),
-    duringSecondHarvester = enum.auto()
+    waitingForSecondWorkerTransfer= enum.auto(),
+    duringSecondHarvester = enum.auto(),
+    waitingForSecondHarvester = enum.auto(),
     afterSecondHarvester = enum.auto(),
     done = enum.auto()
     
@@ -183,12 +187,13 @@ def get_status(task_information, TaskStatusClass):
 
 
 def submit_task_to_crab(campaign, workflow, data_period, dataset, template):
-    
+
     result = ctrl.submit_task_to_crab(campaign, workflow, data_period, get_runs_range(data_period), template, dataset)
+
     return result
 
 
-def set_status(task_status, operation_result):
+def set_status_after_first_worker_submission(task_status, operation_result):
     task_status.duringFirstWorker=1
     task_status.initialized=0
     task_status.loop_id+=1
@@ -197,14 +202,39 @@ def set_status(task_status, operation_result):
 
 executable = """
                 cmsRun /afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/python/EfficiencyAnalysisDQMHarvester_cfg.py 
-                inputFileName=/eos/user/l/lkita/Charmonium/crab_test_campaign2_test_workflow_12/210825_131619/0000/tmp_1.root 
-                outputDirectoryPath=/afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/OutputFiles/
-                bunchSelection=NoSelection
+                inputFileName=<input_files> 
+                outputDirectoryPath=<output_dir>
              """
 
-def submit_task_to_condor(campaign, workflow, data_period):
-    return ctrl.submit_task_to_condor(campaign, workflow, data_period, executable)
+storage_path = "/eos/user/l/lkita"
 
+def aggregate_files(path: str) -> str:
+    if path[-1] != '/':
+        path+='/'
+    files = [f for f in listdir(path) if isfile(join(path, f))]
+    if files:
+        prefix = files[0][:files[0].rfind("_")] 
+        if list(filter(lambda x: not x.startswith(prefix), files)):
+            raise Exception("In: "+path+" directory there are files with different prefixes")
+
+    files =  list(map(lambda x: path+x, files))
+    return ",".join(files)
+
+
+def submit_task_to_condor(campaign, workflow, data_period):
+    global executable
+    input_files_path = storage_path+"/"+"/".join([campaign, workflow, data_period])
+    dirs_iterator = walk(input_files_path)
+    for _ in range(5):
+        dir_name = next(dirs_iterator)
+        input_files_path = dir_name[0]
+    
+    executable = executable.replace("<input_files>", aggregate_files(input_files_path) )
+    output_dir = "/afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/OutputFiles/"+"/".join([campaign, workflow, data_period])
+    executable = executable.replace("<output_dir>", output_dir)
+    executable = executable.replace("\n", " ")
+    
+    return ctrl.submit_task_to_condor(campaign, workflow, data_period, executable)
 
 
 def set_status_during_first_harvester(task_status, cluster_id):
@@ -214,19 +244,31 @@ def set_status_during_first_harvester(task_status, cluster_id):
     return task_status
 
 
+def set_status_during_second_harvester(task_status, cluster_id):
+    task_status.waitingForSecondHarvester=1
+    task_status.duringSecondHarvester=0
+    task_status.condor_job_id=cluster_id
+    return task_status
+
+
 def wait_for_condor(campaign, workflow, data_period):
     task_controller = ctrl.TaskCtrl.TaskControl(campaign=campaign, workflow=workflow, TaskStatusClass=TaskStatus)
     last_task_status = task_controller.getLastTask(data_period=data_period)
     cluster_id = int(last_task_status.get("condor_job_id"))
-    return ctrl.wait_for_condor(cluster_id)
+    return ctrl.check_if_condor_task_is_finished(cluster_id)
 
 
 TRANSITIONS_DICT = {
-                        'initialized': (submit_task_to_crab, 0, set_status, [dataset, template] ),
+                        'initialized': (submit_task_to_crab, 0, set_status_after_first_worker_submission, [dataset, template_for_first_module] ),
                         'duringFirstWorker': (ctrl.check_if_crab_task_is_finished, True, TaskStatus.waitingForFirstWorkerTransfer, []),
                         'waitingForFirstWorkerTransfer': (is_already_transfered, True, TaskStatus.duringFirstHarvester, []),
                         'duringFirstHarvester': (submit_task_to_condor, AnyInt, set_status_during_first_harvester, []),
-                        'waitingForFirstHarvester': (wait_for_condor, True, TaskStatus.afterFirstHarvester, [])
+                        'waitingForFirstHarvester': (wait_for_condor, True, TaskStatus.afterFirstHarvester, []),
+                        'afterFirstHarvester': (submit_task_to_crab, 0, TaskStatus.duringSecondWorker, [dataset, template_for_second_module] ),
+                        'duringSecondWorker': (ctrl.check_if_crab_task_is_finished, True, TaskStatus.waitingForSecondWorkerTransfer, []),
+                        'waitingForSecondWorkerTransfer': (is_already_transfered, True, TaskStatus.duringSecondHarvester, []),
+                        'duringSecondHarvester': (submit_task_to_condor, AnyInt, set_status_during_second_harvester, []),
+                        'waitingForSecondHarvester': (wait_for_condor, True, TaskStatus.done, [])
                    } 
 
 
@@ -244,16 +286,16 @@ def perform_action(task_information: ctrl.TaskCtrl.TaskInformationType, task_con
     try:   
         
         func, expected_result, next_status, parms = TRANSITIONS_DICT[get_status(task_information, TaskStatusClass)]
-        logger.debug("Method: %s will be performed on: (campaign: %s, workflow: %s, data period: %s)" %(func.__name__, task_information['campaign'], task_information['workflow'], task_information['dataPeriod']))
+        logger.info("Method: %s will be performed on: (campaign: %s, workflow: %s, data period: %s)" %(func.__name__, task_information['campaign'], task_information['workflow'], task_information['dataPeriod']))
         result = func(task_information['campaign'], task_information['workflow'], task_information['dataPeriod'], *parms)
         
         if result==expected_result:
-            logger.debug("The operation result is the same as expected.")
+            logger.info("The operation result is the same as expected.")
             if callable(next_status):
-                logger.debug("Setting status with status generator")
+                logger.info("Setting status with status generator")
                 task_information = task_controller.setStatusWithStatusGenerator(task_information['dataPeriod'], next_status, result)
             else:
-                logger.debug("Setting status as: "+str(next_status))
+                logger.info("Setting status as: "+str(next_status))
                 task_information=task_controller.setStatus(task_information['dataPeriod'], next_status)
             return task_information
         return None
@@ -272,9 +314,9 @@ def process_tasks(task_controller: ctrl.TaskCtrl.TaskControl, TaskStatusClass: c
     
     tasks_in_database_information_list = task_controller.getAllTasks().get_points()
     for task_information in tasks_in_database_information_list:
-        logger.debug("Processing task: "+str(task_information))
+        logger.info("Processing task: "+str(task_information))
         task_information_buffer = task_information
-        while task_information_buffer != None:
+        while task_information_buffer != None and task_information_buffer['done']!=1:
             task_information_buffer  = perform_action(task_information_buffer, task_controller, TaskStatusClass=TaskStatusClass)
     
     
