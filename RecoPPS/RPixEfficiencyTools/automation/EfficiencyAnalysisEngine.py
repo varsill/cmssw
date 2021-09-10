@@ -23,8 +23,8 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-campaign='test_campaign2'
-workflow='test_workflow2'
+campaign='my_test_campaign'
+workflow='my_test_workflow'
 dataset = "/Charmonium/Run2018B-12Nov2019_UL2018-v1/AOD"
 template_for_first_module = "CrabConfigTemplateForFirstModule.py"
 template_for_second_module = "CrabConfigTemplateForSecondModule.py"
@@ -204,6 +204,9 @@ executable = """
                 cmsRun /afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/python/EfficiencyAnalysisDQMHarvester_cfg.py 
                 inputFileName=<input_files> 
                 outputDirectoryPath=<output_dir>
+                campaign=<campaign>
+                workflow=<workflow>
+                dataPeriod=<data_period>
              """
 
 storage_path = "/eos/user/l/lkita"
@@ -232,6 +235,9 @@ def submit_task_to_condor(campaign, workflow, data_period):
     executable = executable.replace("<input_files>", aggregate_files(input_files_path) )
     output_dir = "/afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/OutputFiles/"+"/".join([campaign, workflow, data_period])
     executable = executable.replace("<output_dir>", output_dir)
+    executable = executable.replace("<campaign>", campaign)
+    executable = executable.replace("<workflow>", workflow)
+    executable = executable.replace("<data_period>", data_period)
     executable = executable.replace("\n", " ")
     
     return ctrl.submit_task_to_condor(campaign, workflow, data_period, executable)

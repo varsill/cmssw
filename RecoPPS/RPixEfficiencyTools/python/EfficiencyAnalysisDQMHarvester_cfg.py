@@ -87,7 +87,7 @@ process.harvester = DQMEDHarvester('EfficiencyTool_2018DQMHarvester',
 #CONFIGURE DQM Saver
 process.dqmEnv.subSystemFolder = "CalibPPS"
 process.dqmSaver.convention = 'Offline'
-process.dqmSaver.workflow = "/CalibPPS/AlignmentGlobal/CMSSW_11_3_0_pre4"
+process.dqmSaver.workflow = "/"+"/".join([options.campaign, options.workflow, options.dataPeriod])
 process.dqmSaver.saveByRun = -1
 process.dqmSaver.saveAtJobEnd = True
 process.dqmSaver.forceRunNumber = 999999
