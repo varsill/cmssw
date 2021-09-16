@@ -23,8 +23,8 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-campaign='my_test_campaign'
-workflow='my_test_workflow'
+campaign='my_test_campaign_jenkins'
+workflow='my_test_workflow_jenkins'
 dataset = "/Charmonium/Run2018B-12Nov2019_UL2018-v1/AOD"
 template_for_first_module = "CrabConfigTemplateForFirstModule.py"
 template_for_second_module = "CrabConfigTemplateForSecondModule.py"
