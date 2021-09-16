@@ -22,4 +22,4 @@ config.Data.unitsPerJob = 1000
 config.Data.runRange = '317080'
 config.Data.lumiMask = "/afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/InputFiles/test_mask.json"
 
-config.Site.storageSite = 'T3_CH_CERNBOX'
+config.Site.storageSite = 'T2_CH_CERN'
