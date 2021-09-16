@@ -13,7 +13,7 @@ config.JobType.outputFiles = ["tmp.root"]
 config.JobType.pyCfgParams = ["sourceFileList=/afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/InputFiles/test.dat", "outputFileName=tmp.root"]
 config.JobType.priority = 40
 
-config.Data.outLFNDirBase = '/store/group/dpg_ctpps/comm_ctpps/2018_PixelEfficiency'
+config.Data.outLFNDirBase = '/store/user/lkita'
 config.Data.inputDataset = InputDataset
 config.Data.publication = False
 config.Data.inputDBS = 'global'
@@ -22,4 +22,4 @@ config.Data.unitsPerJob = 1000
 config.Data.runRange = '317080'
 config.Data.lumiMask = "/afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/InputFiles/test_mask.json"
 
-config.Site.storageSite = 'T2_CH_CERN'
+config.Site.storageSite = 'T3_CH_CERNBOX'
