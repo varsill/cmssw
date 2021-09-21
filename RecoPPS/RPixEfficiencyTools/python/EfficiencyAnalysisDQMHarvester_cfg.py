@@ -27,6 +27,26 @@ options.register('outputDirectoryPath',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.string,
                 "directory in which the output ROOT file will be saved")
+
+options.register('campaign',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.string,
+                "")
+
+options.register('workflow',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.string,
+                "")
+
+options.register('dataPeriod',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.string,
+                "")
+
+
 options.parseArguments()
 
 

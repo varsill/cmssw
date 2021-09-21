@@ -121,7 +121,7 @@ void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQM
     }
     if(stationId!=0)continue;
     //INTERPOT
-    romanPotBinShiftFolderName = "Arm%i";
+    romanPotBinShiftFolderName = Form("Arm%i", armId);
     //#1
     numMonitorName_ = Form("h1InterPotEfficiencyVsXi_arm%i", armId);
     denMonitorName_ = Form("h1AuxXi_arm%i", armId);
@@ -138,7 +138,7 @@ void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQM
 
     //#2
     numMonitorName_ = Form("h2InterPotEfficiencyMap_arm%i", armId);
-    denMonitorName_ = Form("h2AuxProtonHitDistribution_arm%i", armId);
+    denMonitorName_ = Form("h2ProtonHitExpectedDistribution_arm%i", armId);
     resultName_ = Form("h2InterPotEfficiencyMapFinal_arm%i", armId);
 
     numerator = igetter.get(romanPotBinShiftFolderName+"/"+numMonitorName_);
@@ -171,7 +171,6 @@ void EfficiencyTool_2018DQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQM
 
     //#3
 
-    
     numMonitorName_ = Form("h2InterPotEfficiencyMapMultiRP_arm%i", armId);
     denMonitorName_ = Form("h2ProtonHitExpectedDistribution_arm%i", armId);
     resultName_ = Form("h2InterPotEfficiencyMapMultiRPFinal_arm%i", armId);
