@@ -5,7 +5,7 @@ import subprocess
 import enum 
 import logging
 from typing import Any, Type, Union
-from os import listdir, walk
+from os import listdir, walk, environ
 from os.path import isfile, join
 
 logger = logging.getLogger("EfficiencyAnalysisLogger")
@@ -23,9 +23,11 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-campaign='test123'
-workflow='test123'
-dataset = "/Charmonium/Run2018B-12Nov2019_UL2018-v1/AOD"
+campaign=environ.get("CAMPAIGN")
+workflow=environ.get("WORKFLOW")
+dataset=environ.get("DATASET")
+proxy=environ.get("PROXY")
+
 template_for_first_module = "CrabConfigTemplateForFirstModule.py"
 template_for_second_module = "CrabConfigTemplateForSecondModule.py"
 
@@ -90,9 +92,8 @@ def flatten(t):
      return [item for sublist in t for item in sublist]
 
 
-def submit_task_to_crab(campaign, workflow, data_period, dataset, template):
-
-    result = ctrl.submit_task_to_crab(campaign, workflow, data_period, get_runs_range(data_period), template, dataset)
+def submit_task_to_crab(campaign, workflow, data_period, dataset, template, proxy):
+    result = ctrl.submit_task_to_crab(campaign, workflow, data_period, get_runs_range(data_period), template, dataset, proxy)
 
     return result
 
@@ -169,14 +170,14 @@ def wait_for_condor(campaign, workflow, data_period):
 
 
 TRANSITIONS_DICT = {
-                        'initialized': (submit_task_to_crab, 0, set_status_after_first_worker_submission, [dataset, template_for_first_module] ),
-                        'duringFirstWorker': (ctrl.check_if_crab_task_is_finished, True, TaskStatus.waitingForFirstWorkerTransfer, []),
-                        'waitingForFirstWorkerTransfer': (ctrl.is_crab_output_already_transfered, True, TaskStatus.duringFirstHarvester, []),
+                        'initialized': (submit_task_to_crab, 0, set_status_after_first_worker_submission, [dataset, template_for_first_module, proxy] ),
+                        'duringFirstWorker': (ctrl.check_if_crab_task_is_finished, True, TaskStatus.waitingForFirstWorkerTransfer, [proxy]),
+                        'waitingForFirstWorkerTransfer': (ctrl.is_crab_output_already_transfered, True, TaskStatus.duringFirstHarvester, [proxy]),
                         'duringFirstHarvester': (submit_task_to_condor, ctrl.AnyInt, set_status_during_first_harvester, []),
                         'waitingForFirstHarvester': (wait_for_condor, True, TaskStatus.afterFirstHarvester, []),
                         'afterFirstHarvester': (submit_task_to_crab, 0, TaskStatus.duringSecondWorker, [dataset, template_for_second_module] ),
-                        'duringSecondWorker': (ctrl.check_if_crab_task_is_finished, True, TaskStatus.waitingForSecondWorkerTransfer, []),
-                        'waitingForSecondWorkerTransfer': (ctrl.is_crab_output_already_transfered, True, TaskStatus.duringSecondHarvester, []),
+                        'duringSecondWorker': (ctrl.check_if_crab_task_is_finished, True, TaskStatus.waitingForSecondWorkerTransfer, [proxy]),
+                        'waitingForSecondWorkerTransfer': (ctrl.is_crab_output_already_transfered, True, TaskStatus.duringSecondHarvester, [proxy]),
                         'duringSecondHarvester': (submit_task_to_condor, ctrl.AnyInt, set_status_during_second_harvester, []),
                         'waitingForSecondHarvester': (wait_for_condor, True, TaskStatus.done, [])
                    } 
