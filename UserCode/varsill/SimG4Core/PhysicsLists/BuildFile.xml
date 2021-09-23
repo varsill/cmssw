@@ -1,0 +1,10 @@
+<use name="boost"/>
+<use name="clhep"/>
+<use name="geant4core"/>
+<use name="heppdt"/>
+<use name="FWCore/MessageLogger"/>
+<use name="SimG4Core/MagneticField"/>
+<use name="SimG4Core/Physics"/>
+<export>
+  <lib name="1"/>
+</export>

@@ -1,0 +1,9 @@
+<use name="DataFormats/GEMDigi"/>
+<use name="DataFormats/CSCDigi"/>
+<use name="DataFormats/FEDRawData"/>
+<use name="CondFormats/CSCObjects"/>
+<use name="FWCore/MessageLogger"/>
+<use name="FWCore/Utilities"/>
+<export>
+  <lib name="1"/>
+</export>

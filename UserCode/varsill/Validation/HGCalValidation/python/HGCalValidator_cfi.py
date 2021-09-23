@@ -1,0 +1,81 @@
+import FWCore.ParameterSet.Config as cms
+
+from Validation.HGCalValidation.CaloParticleSelectionForEfficiency_cfi import *
+from Validation.HGCalValidation.HGVHistoProducerAlgoBlock_cfi import *
+
+from SimCalorimetry.HGCalAssociatorProducers.LCToCPAssociation_cfi import layerClusterCaloParticleAssociation
+from SimCalorimetry.HGCalAssociatorProducers.LCToSCAssociation_cfi import layerClusterSimClusterAssociation
+
+from DQMServices.Core.DQMEDAnalyzer import DQMEDAnalyzer
+
+from RecoHGCal.TICL.iterativeTICL_cff import ticlIterLabels, ticlIterLabelsMerge
+
+labelMcl = [cms.InputTag("ticlMultiClustersFromTracksters"+iteration) for iteration in ticlIterLabelsMerge]
+labelMcl.extend(["ticlMultiClustersFromSimTracksters"])
+lcInputMask = [cms.InputTag("ticlTracksters"+iteration) for iteration in ticlIterLabels]
+lcInputMask.extend(["ticlSimTracksters"])
+hgcalValidator = DQMEDAnalyzer(
+    "HGCalValidator",
+
+    ### general settings ###
+    # selection of CP for evaluation of efficiency #
+    CaloParticleSelectionForEfficiency,
+
+    ### reco input configuration ###
+    #2dlayerclusters, pfclusters, multiclusters
+    label_lcl = layerClusterCaloParticleAssociation.label_lc,
+    label_mcl = cms.VInputTag(labelMcl),
+
+    associator = cms.untracked.InputTag("layerClusterCaloParticleAssociationProducer"),
+
+    associatorSim = cms.untracked.InputTag("layerClusterSimClusterAssociationProducer"),
+
+    #General info on layers etc.
+    SaveGeneralInfo = cms.untracked.bool(True),
+    #CaloParticle related plots
+    doCaloParticlePlots = cms.untracked.bool(True),
+    #Select caloParticles for efficiency or pass through
+    doCaloParticleSelection = cms.untracked.bool(True),
+    #SimCluster related plots
+    doSimClustersPlots = cms.untracked.bool(True),
+    #Layer Cluster related plots
+    doLayerClustersPlots = cms.untracked.bool(True),
+    #Multi Cluster related plots
+    doMultiClustersPlots = cms.untracked.bool(True),
+
+    #The cumulative material budget in front of each layer. To be more specific, it
+    #is the material budget just in front of the active material (not including it).
+    #This file is created using the official material budget code.
+    cummatbudinxo = cms.FileInPath('Validation/HGCalValidation/data/D41.cumulative.xo'),
+
+    ### sim input configuration ###
+    label_cp_effic = layerClusterCaloParticleAssociation.label_cp,
+    label_cp_fake = cms.InputTag("mix","MergedCaloTruth"),
+    #simClusters
+    label_scl = layerClusterSimClusterAssociation.label_scl,
+
+    simVertices = cms.InputTag("g4SimHits"),
+
+    LayerClustersInputMask = cms.VInputTag(lcInputMask),
+
+    #Total number of layers of HGCal that we want to monitor
+    #Could get this also from HGCalImagingAlgo::maxlayer but better to get it from here
+    totallayers_to_monitor = cms.int32(52),
+    #Thicknesses we want to monitor. -1 is for scintillator
+    thicknesses_to_monitor = cms.vint32(120,200,300,-1),
+
+    # HistoProducerAlgo. Defines the set of plots to be booked and filled
+    histoProducerAlgoBlock = HGVHistoProducerAlgoBlock,
+
+    ### output configuration
+    dirName = cms.string('HGCAL/HGCalValidator/')
+
+)
+
+from Configuration.ProcessModifiers.premix_stage2_cff import premix_stage2
+premix_stage2.toModify(hgcalValidator,
+    label_cp_fake = "mixData:MergedCaloTruth"
+)
+
+from Configuration.Eras.Modifier_phase2_hgcalV10_cff import phase2_hgcalV10
+phase2_hgcalV10.toModify(hgcalValidator, totallayers_to_monitor = cms.int32(50))

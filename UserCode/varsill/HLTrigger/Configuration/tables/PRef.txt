@@ -1,0 +1,75 @@
+# "PRef" menu
+
+HLTriggerFirstPath	#	menu structure
+HLTriggerFinalPath	#	menu structure
+HLT_ZeroBias_v*	#	trigger studies
+HLT_Physics_v*	#	CMSHLT-892
+DST_Physics_v*	#	trigger studies
+HLT_EcalCalibration_v*	#	CMSHLT-1231
+HLT_HcalCalibration_v*	#	CMSHLT-1231
+HLT_Random_v*	#	CMSHLT-1231
+AlCa_EcalPhiSym_v*	#	CMSHLT-1245
+HLT_ZeroBias_FirstCollisionAfterAbortGap_v*	#	CMSHLT-1264
+AlCa_LumiPixelsCounts_Random_v*			#	CMSHLT-2114
+AlCa_LumiPixelsCounts_ZeroBias_v*		#	CMSHLT-2114
+HLT_ZeroBias_Beamspot_v*	#	CMSHLT-1572
+HLT_HIL1UnpairedBunchBptxPlusForPPRef_v*	#	CMSHLT-1673
+HLT_HIL1UnpairedBunchBptxMinusForPPRef_v*	#	CMSHLT-1673
+HLT_HIL1NotBptxORForPPRef_v*	#	CMSHLT-1673
+HLT_HIHT80_Beamspot_ppRef5TeV_v*	#	CMSHLT-1676
+HLT_HIZeroBias_part0_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part1_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part2_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part3_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part4_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part5_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part6_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part7_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part8_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part9_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part10_v*	#	CMSHLT-1674
+HLT_HIZeroBias_part11_v*	#	CMSHLT-1674
+AlCa_HIRPCMuonNormalisation_v*	#	CMSHLT-1678
+AlCa_HIEcalPi0EBonly_v*	#	CMSHLT-1680
+AlCa_HIEcalPi0EEonly_v*	#	CMSHLT-1680
+AlCa_HIEcalEtaEBonly_v*	#	CMSHLT-1680
+AlCa_HIEcalEtaEEonly_v*	#	CMSHLT-1680
+
+## EndPath ##
+
+PhysicsEndOfFillOutput
+PhysicsCommissioningOutput
+PhysicsEGammaOutput
+PhysicsHadronsTausOutput
+PhysicsMuonsOutput
+PhysicsForwardOutput
+PhysicsTracksOutput
+
+PhysicsHIZeroBias1Output
+PhysicsHIZeroBias2Output
+PhysicsHIZeroBias3Output
+PhysicsHIZeroBias4Output
+PhysicsHIZeroBias5Output
+PhysicsHIZeroBias6Output
+
+DQMOutput
+DQMEventDisplayOutput
+DQMCalibrationOutput
+DQMOnlineBeamspotOutput
+HLTMonitorOutput
+CalibrationOutput
+EcalCalibrationOutput
+RPCMONOutput
+ALCAP0Output
+ALCAPHISYMOutput
+ALCALumiPixelCountsExpressOutput	#	CMSHLT-2114
+ALCALumiPixelCountsPromptOutput		#	CMSHLT-2114
+ExpressOutput
+ExpressAlignmentOutput
+NanoDSTOutput
+
+######## paths that are different between PRef and online_pref ################################
+
+HLTAnalyzerEndpath              # only in 'GRun', not in 'online'
+#RatesMonitoring                # only in 'online', not in 'GRun'
+#DQMHistograms                  # only in 'online', not in 'GRun'

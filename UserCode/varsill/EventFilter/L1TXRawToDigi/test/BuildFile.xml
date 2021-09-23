@@ -1,0 +1,3 @@
+<bin name="testUCTUnpacker" file="testUCTUnpacker.cpp">
+  <use name="EventFilter/L1TXRawToDigi"/>
+</bin>

@@ -1,0 +1,9 @@
+<use name="boost"/>
+<use name="root"/>
+<use name="DQMServices/Core"/>
+<use name="FWCore/MessageLogger"/>
+<use name="CalibFormats/SiStripObjects"/>
+<use name="Geometry/TrackerGeometryBuilder"/>
+<export>
+  <lib name="1"/>
+</export>

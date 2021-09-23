@@ -1,0 +1,7 @@
+<use name="FWCore/Framework"/>
+<use name="FWCore/ParameterSet"/>
+<use name="heppdt"/>
+<use name="root"/>
+<use name="pythia8"/>
+<flags CXXFLAGS="-g"/>
+<flags EDM_PLUGIN="1"/>

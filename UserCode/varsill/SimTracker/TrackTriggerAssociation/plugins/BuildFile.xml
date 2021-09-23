@@ -1,0 +1,8 @@
+<library file="*.cc" name="TrackTriggerAssociationPlugins">
+  <use name="L1Trigger/TrackTrigger"/>
+  <use name="DataFormats/L1TrackTrigger"/>
+  <use name="SimDataFormats/EncodedEventId"/>
+  <use name="SimTracker/TrackTriggerAssociation"/>
+  <use name="root"/>
+  <flags EDM_PLUGIN="1"/>
+</library>

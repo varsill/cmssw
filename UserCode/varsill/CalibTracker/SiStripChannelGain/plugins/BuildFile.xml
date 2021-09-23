@@ -1,0 +1,5 @@
+<use name="CommonTools/UtilAlgos"/>
+<use name="CalibTracker/SiStripChannelGain"/>
+<use name="CondFormats/RunInfo"/>
+<use name="RecoTracker/DeDx"/>
+<flags EDM_PLUGIN="1"/>

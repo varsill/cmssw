@@ -1,0 +1,8 @@
+<use name="boost"/>
+<use name="GeneratorInterface/Core"/>
+<use name="clhep"/>
+<use name="pythia6"/>
+<use name="f77compiler"/>
+<export>
+  <lib name="1"/>
+</export>

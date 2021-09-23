@@ -1,0 +1,7 @@
+<lcgdict>
+  <class name="HOCalibVariables" ClassVersion="16">
+   <version ClassVersion="16" checksum="2161587371"/>
+  </class>
+  <class name="std::vector<HOCalibVariables>"/>
+  <class name="edm::Wrapper<std::vector<HOCalibVariables> >"/>
+</lcgdict>

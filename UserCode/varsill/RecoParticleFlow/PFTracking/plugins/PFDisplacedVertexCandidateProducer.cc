@@ -1,0 +1,87 @@
+#include "RecoParticleFlow/PFTracking/plugins/PFDisplacedVertexCandidateProducer.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/ParameterSet/interface/FileInPath.h"
+
+#include <set>
+
+using namespace std;
+using namespace edm;
+
+PFDisplacedVertexCandidateProducer::PFDisplacedVertexCandidateProducer(const edm::ParameterSet& iConfig)
+    : magneticFieldToken_(esConsumes()) {
+  // --- Setup input collection names --- //
+  inputTagTracks_ = consumes<reco::TrackCollection>(iConfig.getParameter<InputTag>("trackCollection"));
+
+  inputTagMainVertex_ = consumes<reco::VertexCollection>(iConfig.getParameter<InputTag>("mainVertexLabel"));
+
+  inputTagBeamSpot_ = consumes<reco::BeamSpot>(iConfig.getParameter<InputTag>("offlineBeamSpotLabel"));
+
+  verbose_ = iConfig.getUntrackedParameter<bool>("verbose");
+
+  bool debug = iConfig.getUntrackedParameter<bool>("debug");
+
+  // ------ Algo Parameters ------ //
+
+  // Distance of minimal approach below which
+  // two tracks are considered as linked together
+  double dcaCut = iConfig.getParameter<double>("dcaCut");
+
+  // Do not reconstruct vertices wich are
+  // too close to the beam pipe
+  double primaryVertexCut = iConfig.getParameter<double>("primaryVertexCut");
+
+  //maximum distance between the DCA Point and the inner hit of the track
+  double dcaPInnerHitCut = iConfig.getParameter<double>("dcaPInnerHitCut");
+
+  edm::ParameterSet ps_trk = iConfig.getParameter<edm::ParameterSet>("tracksSelectorParameters");
+
+  // Collection to be produced
+  produces<reco::PFDisplacedVertexCandidateCollection>();
+
+  // Vertex Finder parameters  -----------------------------------
+  pfDisplacedVertexCandidateFinder_.setDebug(debug);
+  pfDisplacedVertexCandidateFinder_.setParameters(dcaCut, primaryVertexCut, dcaPInnerHitCut, ps_trk);
+}
+
+PFDisplacedVertexCandidateProducer::~PFDisplacedVertexCandidateProducer() {}
+
+void PFDisplacedVertexCandidateProducer::produce(Event& iEvent, const EventSetup& iSetup) {
+  LogDebug("PFDisplacedVertexCandidateProducer")
+      << "START event: " << iEvent.id().event() << " in run " << iEvent.id().run() << endl;
+
+  // Prepare and fill useful event information for the Finder
+  auto const& theMagField = &iSetup.getData(magneticFieldToken_);
+
+  Handle<reco::TrackCollection> trackCollection;
+  iEvent.getByToken(inputTagTracks_, trackCollection);
+
+  Handle<reco::VertexCollection> mainVertexHandle;
+  iEvent.getByToken(inputTagMainVertex_, mainVertexHandle);
+
+  Handle<reco::BeamSpot> beamSpotHandle;
+  iEvent.getByToken(inputTagBeamSpot_, beamSpotHandle);
+
+  pfDisplacedVertexCandidateFinder_.setPrimaryVertex(mainVertexHandle, beamSpotHandle);
+  pfDisplacedVertexCandidateFinder_.setInput(trackCollection, theMagField);
+
+  // Run the finder
+  pfDisplacedVertexCandidateFinder_.findDisplacedVertexCandidates();
+
+  if (verbose_) {
+    ostringstream str;
+    str << pfDisplacedVertexCandidateFinder_ << endl;
+    cout << pfDisplacedVertexCandidateFinder_ << endl;
+    LogInfo("PFDisplacedVertexCandidateProducer") << str.str() << endl;
+  }
+
+  std::unique_ptr<reco::PFDisplacedVertexCandidateCollection> pOutputDisplacedVertexCandidateCollection(
+      pfDisplacedVertexCandidateFinder_.transferVertexCandidates());
+
+  iEvent.put(std::move(pOutputDisplacedVertexCandidateCollection));
+
+  LogDebug("PFDisplacedVertexCandidateProducer")
+      << "STOP event: " << iEvent.id().event() << " in run " << iEvent.id().run() << endl;
+}
