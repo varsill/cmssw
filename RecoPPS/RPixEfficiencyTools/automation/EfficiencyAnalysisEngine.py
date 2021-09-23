@@ -163,7 +163,7 @@ def flatten(t):
    
 def is_already_transfered(campaign, workflow, dataPeriod):
     try:
-        process = subprocess.Popen(["crab", "status", "crab_"+"_".join([campaign, workflow, str(dataPeriod)])], stdout=subprocess.PIPE)
+        process = subprocess.Popen(["crab", "status", "crab_"+"_".join([campaign, workflow, str(dataPeriod)]), "--proxy=/afs/cern.ch/user/l/lkita/public/lkita_proxy.x509"], stdout=subprocess.PIPE)
         stdout = process.communicate()[0]
 
         stdout = str(stdout, "utf-8")
