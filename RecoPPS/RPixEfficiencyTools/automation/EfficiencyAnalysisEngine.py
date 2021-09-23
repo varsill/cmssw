@@ -201,7 +201,7 @@ def set_status_after_first_worker_submission(task_status, operation_result):
 
 
 executable = """
-                cmsRun /afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/python/EfficiencyAnalysisDQMHarvester_cfg.py 
+                cmsRun /afs/cern.ch/user/e/ecalgit/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/python/EfficiencyAnalysisDQMHarvester_cfg.py 
                 inputFileName=<input_files> 
                 outputDirectoryPath=<output_dir>
                 campaign=<campaign>
@@ -233,7 +233,7 @@ def submit_task_to_condor(campaign, workflow, data_period):
         input_files_path = dir_name[0]
     
     executable = executable.replace("<input_files>", aggregate_files(input_files_path) )
-    output_dir = "/afs/cern.ch/user/l/lkita/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/OutputFiles/"+"/".join([campaign, workflow, data_period])
+    output_dir = "/afs/cern.ch/user/e/ecalgit/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/OutputFiles/"+"/".join([campaign, workflow, data_period])
     executable = executable.replace("<output_dir>", output_dir)
     executable = executable.replace("<campaign>", campaign)
     executable = executable.replace("<workflow>", workflow)
