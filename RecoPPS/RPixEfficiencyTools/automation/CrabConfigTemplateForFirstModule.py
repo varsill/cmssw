@@ -8,7 +8,7 @@ config.General.transferLogs = True
 
 config.JobType.scriptExe = 'wrapper.sh'
 config.JobType.pluginName = 'Analysis'
-config.JobType.psetName = '/afs/cern.ch/user/e/ecalgit/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/python/EfficiencyAnalysisDQMWorker_cfg.py'
+config.JobType.psetName = '/afs/cern.ch/user/l/lkita/new_vers/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/python/EfficiencyAnalysisDQMWorker_cfg.py'
 config.JobType.outputFiles = ["tmp.root"]
 config.JobType.pyCfgParams = ["sourceFileList=/afs/cern.ch/user/l/lkita/public/test.dat", "outputFileName=tmp.root"]
 config.JobType.priority = 40
