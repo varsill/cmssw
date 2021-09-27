@@ -92,6 +92,7 @@ if options.useJsonFile == True:
 
 # no cuts
 fiducialXLow = [0,0,0,0]
+fiducialXHigh = [99,99,99,99]
 fiducialYLow = [-99.,-99.,-99.,-99.]
 fiducialYHigh = [99.,99.,99.,99.]
 
@@ -102,6 +103,8 @@ lastRunPreTs2     = 322633
 lastRunOfTheYear  = 324897
 
 runNumber=options.runNumber
+
+
 if runNumber < firstRunOfTheYear:
     print("This run belongs to before 2018 data taking")
 elif runNumber <= lastRunPreTs1:
@@ -151,11 +154,15 @@ process.worker = DQMEDAnalyzer('ReferenceAnalysisDQMWorker',
     binGroupingX=cms.untracked.int32(1),
     binGroupingY=cms.untracked.int32(1),
     fiducialXLow=cms.untracked.vdouble(fiducialXLow),
+    fiducialXHigh=cms.untracked.vdouble(fiducialXHigh),
     fiducialYLow=cms.untracked.vdouble(fiducialYLow),
     fiducialYHigh=cms.untracked.vdouble(fiducialYHigh),
     producerTag=cms.untracked.string("ReMiniAOD"),
     detectorTiltAngle=cms.untracked.double(18.4),
-    detectorRotationAngle=cms.untracked.double(-8)
+    detectorRotationAngle=cms.untracked.double(-8),
+    useMultiRPEfficiency=cms.untracked.bool(False),
+    useMultiRPProtons=cms.untracked.bool(False),
+    useInterPotEfficiency=cms.untracked.bool(False)
 )
 
 #SCHEDULE JOB

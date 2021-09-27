@@ -91,7 +91,6 @@ void ReferenceAnalysisDQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQMSt
     uint32_t arm = rpId.arm();
     uint32_t station = rpId.station();
     uint32_t rp = rpId.rp();
-    uint32_t plane = rpId.plane();
     std::string rpDirName = Form("Arm%i_st%i_rp%i", arm, station, rp);
     ibooker.cd(rpDirName.data());
 
@@ -116,7 +115,59 @@ void ReferenceAnalysisDQMHarvester::dqmEndJob(DQMStore::IBooker & ibooker, DQMSt
       result->divide(numerator, denominator, 1., 1., "B");
       result->getTH2D()->SetMaximum(1.);
     }
+
+    //EFFICIENCY VS XI
+    //1
+    numMonitorName_ = Form("h1EfficiencyVsXi_arm%i_st%i_rp%i", arm, station, rp);
+    denMonitorName_ = Form("h1Xi_arm%i_st%i_rp%i", arm, station, rp);
+    resultName_ = Form("h1EfficiencyVsXiFinal_arm%i_st%i_rp%i", arm, station, rp);
+
+    numerator = igetter.get(numMonitorName_);
+    denominator = igetter.get(denMonitorName_);
+    result = igetter.get(resultName_);
+
+    if(numerator==NULL)std::cout<<"numerator"<<std::endl;
+    if(denominator==NULL)std::cout<<"denominator"<<std::endl;
+    if(result==NULL)std::cout<<"result"<<std::endl;
+
+    result->divide(numerator, denominator, 1., 1., "B");
+    result->getTH1D()->SetMaximum(1.);
+
+    //2
+    numMonitorName_ = Form("h1EfficiencyVsTx_arm%i_st%i_rp%i", arm, station, rp);
+    denMonitorName_ = Form("h1Tx_arm%i_st%i_rp%i", arm, station, rp);
+    resultName_ = Form("h1EfficiencyVsTxFinal_arm%i_st%i_rp%i", arm, station, rp);
+
+    numerator = igetter.get(numMonitorName_);
+    denominator = igetter.get(denMonitorName_);
+    result = igetter.get(resultName_);
+
+    if(numerator==NULL)std::cout<<"numerator"<<std::endl;
+    if(denominator==NULL)std::cout<<"denominator"<<std::endl;
+    if(result==NULL)std::cout<<"result"<<std::endl;
+
+    result->divide(numerator, denominator, 1., 1., "B");
+    result->getTH1D()->SetMaximum(1.);
+
+    //3
+    numMonitorName_ = Form("h1EfficiencyVsTy_arm%i_st%i_rp%i", arm, station, rp);
+    denMonitorName_ = Form("h1Ty_arm%i_st%i_rp%i", arm, station, rp);
+    resultName_ = Form("h1EfficiencyVsTyFinal_arm%i_st%i_rp%i", arm, station, rp);
+    
+    numerator = igetter.get(numMonitorName_);
+    denominator = igetter.get(denMonitorName_);
+    result = igetter.get(resultName_);
+
+    if(numerator==NULL)std::cout<<"numerator"<<std::endl;
+    if(denominator==NULL)std::cout<<"denominator"<<std::endl;
+    if(result==NULL)std::cout<<"result"<<std::endl;
+
+    result->divide(numerator, denominator, 1., 1., "B");
+    result->getTH1D()->SetMaximum(1.);
   }
+
+
+
 
 
 }

@@ -786,7 +786,7 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent,
   using namespace edm;
   // Handle<edm::DetSetVector<CTPPSPixelRecHit>> pixelRecHits;
   // iEvent.getByToken(pixelRecHitToken_, pixelRecHits);
-
+  
   Handle<edm::DetSetVector<CTPPSPixelLocalTrack>> pixelLocalTracks;
   iEvent.getByToken(pixelLocalTrackToken_, pixelLocalTracks);
 
